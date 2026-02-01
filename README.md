@@ -1,1 +1,0 @@
-# MTHs-A-Maze-ing
