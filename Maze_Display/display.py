@@ -1,6 +1,6 @@
 import time
 
-def render_maze():
+def render_maze(string_hex = "FAF5FFF"):
     CHAR_V = "║"
     CHAR_H = "═"
     # Corners (For F=1111 looks)
@@ -9,7 +9,6 @@ def render_maze():
     C_BL = "╚" # Bottom Left
     C_BR = "╝" # Bottom Right
     SPACE = " "
-    string_hex = "FAF5FFF"
     maze_matrix = []
 
     line_top = ""
@@ -25,40 +24,29 @@ def render_maze():
         maze_matrix.append(bit_list)
     for bits in maze_matrix:
         west, south, east, north = bits
+        middle_part = CHAR_H * 6 if north else SPACE * CELL_WIDTH
+        line_top += f"{C_TL}{middle_part}{C_TR}"
 
-        top_wall = CHAR_H * CELL_WIDTH if north else SPACE * CELL_WIDTH
-        line_top += f"{C_TL}{top_wall}{C_TR}"
-        # West Wall Logic
-        w_wall = CHAR_V if west else SPACE
+        line_mid1 += f"{CHAR_V}{SPACE * 6}" if west else f"{SPACE * 7}"
+        line_mid1 += f"{CHAR_V}" if east else f"{SPACE}"
 
-        # East Wall Logic
-        e_wall = CHAR_V if east else SPACE
+        line_mid2 += f"{CHAR_V}{SPACE * 6}" if west else f"{SPACE * 7}"
+        line_mid2 += f"{CHAR_V}" if east else f"{SPACE}"
 
-        # The empty space in the center
-        inner_space = SPACE * CELL_WIDTH
+        middle_part = CHAR_H * 6 if south else SPACE * CELL_WIDTH
+        line_bot += f"{C_BL}{middle_part}{C_BR}"
+    print(line_top)
+    print(line_mid1)
+    print(line_mid2)
+    print(line_bot)
 
-        # Glue: Left Wall + Space + Right Wall
-        line_mid1 += f"{w_wall}{inner_space}{e_wall}"
-        line_mid2 += f"{w_wall}{inner_space}{e_wall}"
-    # print(maze_matrix)
-        # If south bit is 1, use "══════", otherwise use "      "
-        bot_wall = CHAR_H * CELL_WIDTH if south else SPACE * CELL_WIDTH
-
-        # Glue: Corner + Wall + Corner
-        line_bot += f"{C_BL}{bot_wall}{C_BR}"
-
-    def type_writer(text, speed=0.01):
-        for char in text:
-            print(char, end="") # flush=True forces immediate printing
-            time.sleep(speed)
-        print() # Move to next line after loop finishes
-
-    # --- 4. PRINT WITH ANIMATION ---
-    print("\nRendering Maze...\n")
-
-    type_writer(line_top)
-    type_writer(line_mid1)
-    type_writer(line_mid2)
-    type_writer(line_bot)
-render_maze()
-
+def maze_parser():
+    try:
+        with open("../maze_output.txt", 'r') as file:
+            line = file.readline()
+            while line:
+                render_maze(line.strip())
+                line = file.readline()
+    except FileNotFoundError:
+        print("File: 'maze_output.txt' not found !")
+maze_parser()
