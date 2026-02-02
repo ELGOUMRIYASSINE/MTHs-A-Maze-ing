@@ -1,6 +1,19 @@
-config_path = "./config.txt"
+config_path = "../config.txt"
 config = {}
 config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT', 'OUTPUT_FILE', 'PERFECT']
+
+
+def check_path():
+    width = config['WIDTH']
+    height = config['HEIGHT']
+    x, y = config['ENTRY']
+    x2, y2 = config['EXIT']
+    if not (x == 0 or x == width - 1 or y == 0 or y == height - 1):
+        raise ValueError("ENTRY must be on the maze border")
+    if not (x2 == 0 or x2 == width - 1 or y2 == 0 or y2 == height - 1):
+        raise ValueError("EXIT must be on the maze border")
+    if x == x2 and y == y2:
+        raise ValueError("Entry or Exist Probleme")
 
 
 def value_valid(key, value):
@@ -13,13 +26,10 @@ def value_valid(key, value):
         value = value.split(",")
         if len(value) != 2:
             return False
-        x, y = int(value[0]), int(value[1])
-        if (not (((x == int(config.get('WIDTH', 0)) -1  or x == 0)) and ((y == int(config.get('HEIGHT', 0)) -1  or y == 0)))):
-            raise ValueError("Invalid value for key:", key)
-        config[key] = (x, y)
+        config[key] = (int(value[0]), int(value[1]))
     if key == 'OUTPUT_FILE':
         try:
-            open(value, 'r')
+            open(value, 'w')
         except Exception:
             raise ValueError("Invalid file for key:", key)
     if key == 'PERFECT':
@@ -36,20 +46,22 @@ def parse_config():
     try:
         with open(config_path, 'r') as config_file:
             for line in config_file:
+                if (line[0] == '#' or line.strip() == ''):
+                    continue
                 data = line.split("=")
                 if (len(data) != 2 or not data[0] in config_keys):
-                        raise ValueError("Invalid config format")
+                    raise ValueError("Invalid config format")
                 config[data[0]] = data[1].rstrip('\n')
             for key in config_keys:
                 if key not in config:
                     raise ValueError("Missing key(s) in config")
             for key, value in config.items():
                 value_valid(key, value)
-                if config['ENTRY'] == config['EXIT']:
-                    raise ValueError("The Entry The Same As The Exit!!!")
+            check_path()
     except Exception as e:
         print(e)
         exit()
+
 
 parse_config()
 print(config)
