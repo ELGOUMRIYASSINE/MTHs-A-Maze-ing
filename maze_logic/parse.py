@@ -1,8 +1,3 @@
-config_path = "../config.txt"
-config = {}
-config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT', 'OUTPUT_FILE', 'PERFECT']
-
-
 def check_path():
     width = config['WIDTH']
     height = config['HEIGHT']
@@ -43,6 +38,9 @@ def value_valid(key, value):
 
 
 def parse_config():
+    config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT', 'OUTPUT_FILE', 'PERFECT']
+    config_path = "../config.txt"
+    config = {}
     try:
         with open(config_path, 'r') as config_file:
             for line in config_file:
