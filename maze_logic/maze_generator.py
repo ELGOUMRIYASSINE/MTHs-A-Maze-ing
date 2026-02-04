@@ -1,13 +1,25 @@
 import sys as args
-import parse.py
+import parse as parser
+import random as rand
+
+try:
+    if len(args.argv) == 2:
+        parser.parse_config(args.argv[1])
+    else:
+        parser.parse_config()
+except Exception as e:
+    print(e)
+    exit()
 
 
 class Cell:
-    def __init__(self, top=1, buttom=1, left=1, right=1):
+    def __init__(self, x, y, top=1, buttom=1, left=1, right=1):
         self.top = top
         self.buttom = buttom
         self.left = left
         self.right = right
+        self.x = x
+        self.y = y
         self.visited = False
 
     def __str__(self):
@@ -15,29 +27,48 @@ class Cell:
         binary_str = ""
         for i in object:
             binary_str += str(object[i])
-        print(binary_str)
         return hex(int(binary_str, 2))[2].upper()
 
-W = 14
-H = 19
+
+def update():
+    with open("../maze_output.txt", "w") as f:
+        for i in range(parser.config['HEIGHT']):
+            if not i == 0:
+                f.write("\n")
+            for n in range(parser.config['WIDTH']):
+                f.write(str(grid[i][n]))
+
+
+def hunt(is_start):
+    if is_start is True:
+        x = rand.randint(0, parser.config['WIDTH'])
+        y = rand.randint(0, parser.config['HEIGHT'])
+        return [y, x]
+    for y in range(parser.config['HEIGHT']):
+        for x in range(parser.config['WIDTH']):
+            if grid[y][x].visited is False:
+                return [y, x]
+
+
+def kill():
+    dim = [1, 2, 3, 4]
+    while True:
+        state = hunt
+        if not state:
+            break
 
 grid = []
-for i in range(H):
-    cell = Cell()
-    # cell = {1, 2, 3, 4}
-    grid.append([cell]*W)
+for y in range(parser.config['HEIGHT']):
+    row = []
+    for x in range(parser.config['WIDTH']):
+        cell = Cell(x, y)
+        row.append(cell)
+    grid.append(row)
+        
+        
+        
 
-with open("../maze_output.txt", "w") as f:
-    for i in range(H):
-        print(f"row number {i} \n")
-        if not i == 0:
-            f.write("\n")
-        for n in range(W):
-            # print(f"column number {n} ")
-            f.write(str(grid[i][n]))
-            # print(str(grid[i][n]))
-            # f.write(str())
 
-# for n in range(H):
-#     for m in range(W):
-#         print(grid[n][m].top)
+
+update()
+kill()
