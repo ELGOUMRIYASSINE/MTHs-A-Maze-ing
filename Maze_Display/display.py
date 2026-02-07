@@ -55,4 +55,5 @@ def render_maze():
     line_bot += CHAR
     print(line_bot)
 
-render_maze()
+if __name__ == "__main__":
+    render_maze()

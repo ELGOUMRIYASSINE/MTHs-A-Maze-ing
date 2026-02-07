@@ -18,7 +18,7 @@ def check_path():
 def value_valid(key, value):
     if key in ['WIDTH', 'HEIGHT']:
         value = int(value)
-        if not (value <= 100 and value >= 5):
+        if not (value <= 45 and value >= 8):
             raise ValueError("Invalid value for key:", key)
         config[key] = value
     if key in ['ENTRY', 'EXIT']:

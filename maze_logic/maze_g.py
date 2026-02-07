@@ -2,10 +2,11 @@ import sys as args
 import time
 import parse as parser
 import random as rand
-import math
+
+# args.path.append('../Maze_Display')
+# import display
 
 
-grid = []
 try:
     if len(args.argv) == 2:
         parser.parse_config(args.argv[1])
@@ -17,9 +18,9 @@ except Exception as e:
 
 
 class Cell:
-    def __init__(self, x, y, top=1, bottom=1, left=1, right=1):
+    def __init__(self, x, y, top=1, buttom=1, left=1, right=1):
         self.top = top
-        self.bottom = bottom
+        self.buttom = buttom
         self.left = left
         self.right = right
         self.x = x
@@ -27,13 +28,14 @@ class Cell:
         self.visited = False
 
     def __str__(self):
-        # Renderer expects: west, south, east, north (1 = wall)
-        bits = [self.left, self.bottom, self.right, self.top]
-        binary_str = "".join(str(b) for b in bits)
+        object = [self.top, self.right, self.buttom, self.left]
+        binary_str = ""
+        for i in object:
+            binary_str += str(i)
         return hex(int(binary_str, 2))[2].upper()
 
 
-def update():
+def update(grid):
     with open("../maze_output.txt", "w") as f:
         for i in range(parser.config['HEIGHT']):
             if not i == 0:
@@ -43,29 +45,34 @@ def update():
 
 
 def generate_grid():
+    grid = []
     for y in range(parser.config['HEIGHT']):
         row = []
         for x in range(parser.config['WIDTH']):
             cell = Cell(x, y)
             row.append(cell)
         grid.append(row)
-    update()
+    update(grid)
+    return grid
 
-
-def check_root(pos, root):
+def check_root(grid, pos, root):
     y, x = pos
     if root == "top":
-        return y > 0 and not grid[y - 1][x].visited
+        if y > 0 and grid[y][x].top == 1 and grid[y - 1][x].visited is False:
+            return True
     if root == "bottom":
-        return y < parser.config["HEIGHT"] - 1 and not grid[y + 1][x].visited
+        if y < parser.config["HEIGHT"] and grid[y][x].bottom == 1 and grid[y + 1][x].visited is False:
+            return True
     if root == "left":
-        return x > 0 and not grid[y][x - 1].visited
+        if x > 0 and grid[y][x].left == 1 and grid[y][x - 1].visited is False:
+            return True
     if root == "right":
-        return x < parser.config["WIDTH"] - 1 and not grid[y][x + 1].visited
+        if x < parser.config["WIDTH"] and grid[y][x].right == 1 and grid[y][x + 1].visited is False:
+            return True
     return False
 
 
-def walk(root, pos):
+def walk(grid, root, pos):
     y, x = pos
     if root == "top":
         grid[y][x].top = 0
@@ -85,32 +92,28 @@ def walk(root, pos):
         return [y, x - 1]
 
 
-def kill(pos):
-    dim = ["top", "bottom", "left", "right"]
+def kill(grid, pos):
+    dim = ["top", "buttom", "left", "right"]
     while True:
         tmp_roots = dim.copy()
-        moved = False
-
-        for _ in range(4):
+        time_to_hunt = True
+        for i in range(4):
             root = rand.choice(tmp_roots)
-            tmp_roots.remove(root)
-
-            if check_root(pos, root):
-                pos = walk(root, pos)
+            if check_root(grid[pos[0]][pos[1]], root) is True:
+                time_to_hunt = False
+                pos = walk(grid, root, pos)
+                update(grid)
                 grid[pos[0]][pos[1]].visited = True
-                moved = True
-                break
-
-        if not moved:
-            return pos
+        if time_to_hunt is True:
+            raise ValueError
 
 
-def hunt():
+def hunt(grid):
     H = parser.config['HEIGHT'] - 1
     W = parser.config['WIDTH'] - 1
 
-    for y in range(parser.config['HEIGHT']):
-        for x in range(parser.config['WIDTH']):
+    for y in range(H):
+        for x in range(W):
             if grid[y][x].visited is False:
                 if y > 0 and grid[y - 1][x].visited is True:
                     grid[y][x].top = 0
@@ -128,31 +131,26 @@ def hunt():
                     grid[y][x].left = 0
                     grid[y][x - 1].right = 0
                     return [y, x]
-    return None
+    return None 
 
-
-def add_42():
-    area_h, area_w = 4, 4
-    y0 = math.floor((parser.config['HEIGHT'] - area_h) / 2)
-    x0 = math.floor((parser.config['WIDTH'] - area_w) / 2)
-
-    for y in range(y0, y0 + area_h):
-        for x in range(x0, x0 + area_w):
-            grid[y][x].visited = True
 
 if __name__ == "__main__":
-    generate_grid()
-    add_42()
+    # generate the initial grid
+    grid = generate_grid()
+
     H = parser.config['HEIGHT'] - 1
     W = parser.config['WIDTH'] - 1
 
     start = [rand.randint(0, H), rand.randint(0, W)]
     full = False
     grid[start[0]][start[1]].visited = True
-    while True:
-        start = kill(start)
-        start = hunt()
-        update()
+    while full is False:
+        print("jj")
+        try:
+            kill(grid, start)
+        except Exception:
+            start = hunt(grid)
+            update(grid)
         if start is None:
-            break
-        grid[start[0]][start[1]].visited = True
+            full = True
+
