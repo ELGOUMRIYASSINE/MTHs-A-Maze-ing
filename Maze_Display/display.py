@@ -1,10 +1,45 @@
-import time
 import os
+import unicodedata
 
-CHAR = "█"
+
+
+# ANSI Color Codes
+RESET = "\033[0m"
+REVERSE = "\033[7m"  # Swaps FG and BG colors (fastest fix)
+
+# Specific Colors (Foreground / Background)
+WHITE_BG = "\033[47m"
+BLACK_BG = "\033[40m"
+BLUE_BG = "\033[44m"  # Perfect for your "42" pattern!
+
+CHAR = f"{WHITE_BG} {RESET}"
+# CHAR = "█"
 SPACE = " "
 TOM = "🐱"  # Entry
 JERRY = "🐭" # Exit
+def _display_width(text: str) -> int:
+    width = 0
+    for ch in text:
+        # Combining marks have zero width
+        if unicodedata.combining(ch):
+            continue
+        # East Asian Wide/Fullwidth usually take 2 columns in terminals (many emojis too)
+        width += 2 if unicodedata.east_asian_width(ch) in {"W", "F"} else 1
+    return width
+
+
+def _fit_cell(text: str, cell_width: int = 3) -> str:
+    """
+    Make sure the returned string occupies exactly `cell_width` terminal columns.
+    This avoids visual shifting when using wide glyphs (e.g. emojis).
+    """
+    w = _display_width(text)
+    if w == cell_width:
+        return text
+    if w < cell_width:
+        return text + (SPACE * (cell_width - w))
+    # Too wide: fallback to a single ASCII marker
+    return " ? "[:cell_width]
 
 def parse_maze_output(filename):
     matrix = []
@@ -67,9 +102,9 @@ def render_maze(show_path=False):
             
             # Check what goes in the center (Priority Order)
             if (c_idx, r_idx) == entry_pos:
-                line_mid += f" {TOM} "  # Draw Tom
+                line_mid += _fit_cell(TOM)  # Draw entry (fits 3 columns)
             elif (c_idx, r_idx) == exit_pos:
-                line_mid += f"{JERRY} " # Draw Jerry (Adjust space for width)
+                line_mid += _fit_cell(JERRY)  # Draw exit (fits 3 columns)
             elif is_solid:
                 line_mid += CHAR * 3    # Draw Wall Block
             # elif show_path and (c_idx, r_idx) in path_coords:
@@ -100,7 +135,7 @@ if __name__ == "__main__":
     
     while True:
         # Clear screen (Optional, makes it look like a game)
-        # os.system('cls' if os.name == 'nt' else 'clear') 
+        os.system('cls' if os.name == 'nt' else 'clear') 
         
         render_maze(show_path)
         
