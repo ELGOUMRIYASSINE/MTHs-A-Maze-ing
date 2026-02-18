@@ -58,7 +58,25 @@ def generate_grid():
 def check_root(grid, pos, root):
     y, x = pos
     if root == "top":
-        if y > 0 and grid[y][x].top == 1 and grid[y - 1][x].visited is False:
+        if yif __name__ == "__main__":
+    # generate the initial grid
+    grid = generate_grid()
+
+    H = parser.config['HEIGHT'] - 1
+    W = parser.config['WIDTH'] - 1
+
+    start = [rand.randint(0, H), rand.randint(0, W)]
+    full = False
+    grid[start[0]][start[1]].visited = True
+    while full is False:
+        print("jj")
+        try:
+            kill(grid, start)
+        except Exception:
+            start = hunt(grid)
+            update(grid)
+        if start is None:
+            full = True > 0 and grid[y][x].top == 1 and grid[y - 1][x].visited is False:
             return True
     if root == "bottom":
         if y < parser.config["HEIGHT"] and grid[y][x].bottom == 1 and grid[y + 1][x].visited is False:
@@ -131,7 +149,7 @@ def hunt(grid):
                     grid[y][x].left = 0
                     grid[y][x - 1].right = 0
                     return [y, x]
-    return None 
+    return None
 
 
 if __name__ == "__main__":

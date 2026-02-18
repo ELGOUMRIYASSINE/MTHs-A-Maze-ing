@@ -3,14 +3,23 @@ import unicodedata
 
 
 
-# ANSI Color Codes
+# ANSI Colors
 RESET = "\033[0m"
-REVERSE = "\033[7m"  # Swaps FG and BG colors (fastest fix)
-
-# Specific Colors (Foreground / Background)
 WHITE_BG = "\033[47m"
 BLACK_BG = "\033[40m"
-BLUE_BG = "\033[44m"  # Perfect for your "42" pattern!
+BLUE_BG = "\033[44m"
+RED_BG = "\033[41m"
+GREEN_BG = "\033[42m"
+YELLOW_BG = "\033[43m"
+
+THEMS = [
+    #Classic
+    {"wall": WHITE_BG, "solid": BLUE_BG, "space": BLACK_BG},
+    #Matrix
+    {"wall": GREEN_BG, "solid": WHITE_BG, "space": BLACK_BG},
+    #Fire
+    {"wall": RED_BG, "solid": WHITE_BG, "space": BLACK_BG}
+]
 
 CHAR = f"{WHITE_BG} {RESET}"
 # CHAR = "█"
@@ -63,7 +72,7 @@ def parse_maze_output(filename):
             # Skip potential empty lines
             while i < len(lines) and not lines[i]:
                 i += 1
-            
+
             # Parse metadata
             if i + 2 < len(lines):
                 # Convert coords to integers immediately here for safety
@@ -76,15 +85,21 @@ def parse_maze_output(filename):
         return [], {}
     return matrix, meta
 
-def render_maze(show_path=False):
+def get_path_coords(entry_x, entry_y, path_string):
+    pass
+
+def render_maze(show_path=False, theme_idx=0):
     matrix, meta = parse_maze_output("../maze_output.txt") # Use local file
     if not matrix: return
-
     entry_pos = meta['entry']
     exit_pos = meta['exit']
-    
+    theme = THEMS[theme_idx]
     # TODO: You still need to convert meta['path'] string to a list of (x,y) coordinates
-    # path_coords = convert_path_to_coords(entry_pos, meta['path']) 
+    # path_coords = conv ert_path_to_coords(entry_pos, meta['path'])
+    # wall_char = f"{WHITE_BG} {RESET}"
+    WALL = f'{theme["wall"]} {RESET}'
+    SOLID = f'{theme["solid"]} {RESET}'
+    SPACE = f'{theme["space"]} {RESET}'
 
     for r_idx, row in enumerate(matrix):
         line_top = ""
@@ -92,29 +107,29 @@ def render_maze(show_path=False):
         for c_idx, cell in enumerate(row):
             west, south, east, north = cell
             is_solid = (west and south and east and north)
-            
+
             # 1. TOP LINE
-            line_top += CHAR
-            line_top += CHAR * 3 if north else SPACE * 3
+            line_top += WALL
+            line_top += WALL * 3 if north else SPACE * 3
 
             # 2. MID LINE (The Fix: Mutually Exclusive Checks)
-            line_mid += CHAR if west else SPACE
-            
+            line_mid += WALL if west else SPACE
+
             # Check what goes in the center (Priority Order)
             if (c_idx, r_idx) == entry_pos:
                 line_mid += _fit_cell(TOM)  # Draw entry (fits 3 columns)
             elif (c_idx, r_idx) == exit_pos:
                 line_mid += _fit_cell(JERRY)  # Draw exit (fits 3 columns)
             elif is_solid:
-                line_mid += CHAR * 3    # Draw Wall Block
+                line_mid += SOLID * 3    # Draw Wall Block
             # elif show_path and (c_idx, r_idx) in path_coords:
             #     line_mid += " * "     # Draw Path Dot
             else:
                 line_mid += SPACE * 3   # Draw Empty Space
 
         # Close the row
-        line_top += CHAR
-        line_mid += CHAR
+        line_top += WALL
+        line_mid += WALL
 
         print(line_top)
         print(line_mid)
@@ -124,38 +139,38 @@ def render_maze(show_path=False):
     last_row = matrix[-1]
     for cell in last_row:
         west, south, east, north = cell
-        line_bot += CHAR
-        line_bot += CHAR * 3 if south else SPACE * 3
-    line_bot += CHAR
+        line_bot += WALL
+        line_bot += WALL * 3 if south else SPACE * 3
+    line_bot += WALL
     print(line_bot)
     print()
 
 if __name__ == "__main__":
     show_path = False
-    
+    current_theme_idx = 0
     while True:
         # Clear screen (Optional, makes it look like a game)
-        os.system('cls' if os.name == 'nt' else 'clear') 
-        
-        render_maze(show_path)
-        
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+        render_maze(show_path, current_theme_idx)
+
         print("=== A-Maze-ing ===")
         print("1. Re-generate a new maze")
         print("2. Show/Hide path")
         print("3. Rotate maze colors")
         print("4. Quit")
-        
+
         choice = input("Choice? (1-4): ")
-        
+
         match choice:
             case "1":
                 # Call the generation script here
                 # os.system("python3 a_maze_ing.py config.txt")
-                pass 
+                pass
             case "2":
                 show_path = not show_path # Toggle flag
             case "3":
-                pass # Add color logic later
+                current_theme_idx = (current_theme_idx + 1) % len(THEMS)
             case "4":
                 exit()
             case _:
