@@ -1,5 +1,4 @@
 import sys as args
-import time
 import parse as parser
 import random as rand
 import math
@@ -25,9 +24,10 @@ class Cell:
         self.x = x
         self.y = y
         self.visited = False
+        self.blocked = False
+
 
     def __str__(self):
-        # Renderer expects: west, south, east, north (1 = wall)
         bits = [self.left, self.bottom, self.right, self.top]
         binary_str = "".join(str(b) for b in bits)
         return hex(int(binary_str, 2))[2].upper()
@@ -55,13 +55,29 @@ def generate_grid():
 def check_root(pos, root):
     y, x = pos
     if root == "top":
-        return y > 0 and not grid[y - 1][x].visited
+        return (
+            y > 0
+            and not grid[y - 1][x].visited
+            and not grid[y - 1][x].blocked
+        )
     if root == "bottom":
-        return y < parser.config["HEIGHT"] - 1 and not grid[y + 1][x].visited
+        return (
+            y < parser.config["HEIGHT"] - 1
+            and not grid[y + 1][x].visited
+            and not grid[y + 1][x].blocked
+        )
     if root == "left":
-        return x > 0 and not grid[y][x - 1].visited
+        return (
+            x > 0
+            and not grid[y][x - 1].visited
+            and not grid[y][x - 1].blocked
+        )
     if root == "right":
-        return x < parser.config["WIDTH"] - 1 and not grid[y][x + 1].visited
+        return (
+            x < parser.config["WIDTH"] - 1
+            and not grid[y][x + 1].visited
+            and not grid[y][x + 1].blocked
+        )
     return False
 
 
@@ -111,20 +127,20 @@ def hunt():
 
     for y in range(parser.config['HEIGHT']):
         for x in range(parser.config['WIDTH']):
-            if grid[y][x].visited is False:
-                if y > 0 and grid[y - 1][x].visited is True:
+            if grid[y][x].visited is False and not grid[y][x].blocked:
+                if y > 0 and grid[y - 1][x].visited is True and not grid[y - 1][x].blocked:
                     grid[y][x].top = 0
                     grid[y - 1][x].bottom = 0
                     return [y, x]
-                if y < H and grid[y + 1][x].visited is True:
+                if y < H and grid[y + 1][x].visited is True and not grid[y + 1][x].blocked:
                     grid[y][x].bottom = 0
                     grid[y + 1][x].top = 0
                     return [y, x]
-                if x < W and grid[y][x + 1].visited is True:
+                if x < W and grid[y][x + 1].visited is True and not grid[y][x + 1].blocked:
                     grid[y][x].right = 0
                     grid[y][x + 1].left = 0
                     return [y, x]
-                if x > 0 and grid[y][x - 1].visited is True:
+                if x > 0 and grid[y][x - 1].visited is True and not grid[y][x - 1].blocked:
                     grid[y][x].left = 0
                     grid[y][x - 1].right = 0
                     return [y, x]
@@ -132,13 +148,22 @@ def hunt():
 
 
 def add_42():
-    area_h, area_w = 4, 4
-    y0 = math.floor((parser.config['HEIGHT'] - area_h) / 2)
-    x0 = math.floor((parser.config['WIDTH'] - area_w) / 2)
+    area_h, area_w = 5, 7
+    start_y = math.floor((parser.config['HEIGHT'] - area_h) / 2)
+    start_x = math.floor((parser.config['WIDTH'] - area_w) / 2)
 
-    for y in range(y0, y0 + area_h):
-        for x in range(x0, x0 + area_w):
-            grid[y][x].visited = True
+    pattern = [
+        [1, 0, 1, 0, 1, 1, 1],
+        [1, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 0, 1, 1, 1],
+        [0, 0, 1, 0, 1, 0, 0],
+        [0, 0, 1, 0, 1, 1, 1]
+    ]
+
+    for p_y in range(area_h):
+        for p_x in range(area_w):
+            if pattern[p_y][p_x] == 1:
+                grid[start_y + p_y][start_x + p_x].blocked = True
 
 if __name__ == "__main__":
     generate_grid()
@@ -151,6 +176,7 @@ if __name__ == "__main__":
     grid[start[0]][start[1]].visited = True
     while True:
         start = kill(start)
+        grid[start[0]][start[1]].visited = True
         start = hunt()
         update()
         if start is None:
