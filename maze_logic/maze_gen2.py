@@ -19,11 +19,22 @@ class Cell:
 
 
 class Grid:
-    def __init__(self, height, width, maze_file="maze_output.txt"):
-        self.height = height
-        self.width = width
+    def __init__(self, maze_file="maze_output.txt"):
+        self.validate_config()
+        self.height = parser.config['HEIGHT']
+        self.width = parser.config['WIDTH']
         self.maze_file = maze_file
         self.grid = []
+    @staticmethod
+    def validate_config():
+        try:
+            if len(args.argv) == 2:
+                parser.parse_config(args.argv[1])
+            else:
+                parser.parse_config()
+        except Exception as e:
+            print(e)
+            exit()
 
     def generate_grid(self):
         for y in range(self.height):
@@ -41,6 +52,7 @@ class Grid:
                     f.write("\n")
                 for n in range(self.width):
                     f.write(str(self.grid[i][n]))
+
     def connect_east(self, row, col):
         self.grid[row][col].right = 0
         self.grid[row][col + 1].left = 0
@@ -49,15 +61,36 @@ class Grid:
         self.grid[row][col].top = 0
         self.grid[row - 1][col].bottom = 0
 
+    def draw_maze(self):
+        for row in range(self.height):
+            run = []
 
-try:
-    if len(args.argv) == 2:
-        parser.parse_config(args.argv[1])
-    else:
-        parser.parse_config()
-except Exception as e:
-    print(e)
-    exit()
+            for col in range(self.width):
+                run.append((row, col))
 
-grid = Grid(parser.config['HEIGHT'], parser.config['WIDTH'], "maze_output_2.txt")
+                at_top_row  = (row == 0)
+                at_last_col = (col == self.width - 1)
+
+                # l7alat li kaynin
+                if at_top_row:
+                    if not at_last_col:
+                        self.connect_east(row, col)
+
+                elif at_last_col:
+                    chosen = random.choice(run)
+                    self.connect_north(chosen[0], chosen[1])
+                    run = []
+                else:
+                    go_east = random.randint(0, 1) == 0
+
+                    if go_east:
+                        self.connect_east(row, col)
+                    else:
+                        chosen = random.choice(run)
+                        self.connect_north(chosen[0], chosen[1])
+                        run = []
+
+grid = Grid("maze_output_2.txt")
 grid.generate_grid()
+grid.draw_maze()
+grid.update()
