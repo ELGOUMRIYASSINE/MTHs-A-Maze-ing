@@ -21,21 +21,28 @@ class Cell:
 
 
 class MazeGenerator:
-    def __init__(self, config, mode="RBT"):
+    def __init__(self, config):
         self.grid = []
         self.HEIGHT = config['HEIGHT']
         self.WIDTH = config['WIDTH']
-        # self.save_file = config['SAVE_FILE']
+        self.entry = config['ENTRY']
+        self.exit = config['EXIT']
         self.output_file = config['OUTPUT_FILE']
-        self.mode = mode
 
-    def update(self):
+    def update(self, final=True):
         with open(self.output_file, "w") as f:
             for i in range(parser.config['HEIGHT']):
                 if not i == 0:
                     f.write("\n")
                 for n in range(parser.config['WIDTH']):
                     f.write(str(self.grid[i][n]))
+            if final:
+                f.write("\n\n")
+                f.write(",".join(str(nbr) for nbr in self.entry))
+                f.write("\n")
+                f.write(",".join(str(nbr) for nbr in self.exit))
+                f.write("\n")
+                f.write("SWSESWSESWSSSEESEEENEESESEESSSEEESSSEEENNENEE")
 
     def generate_grid(self):
         for y in range(parser.config['HEIGHT']):
@@ -156,12 +163,16 @@ class MazeGenerator:
                     self.grid[start_y + p_y][start_x + p_x].blocked = True
 
     def generate(self):
-        self.grid = []
         self.generate_grid()
         self.add_42()
         H = parser.config['HEIGHT'] - 1
         W = parser.config['WIDTH'] - 1
-        start = [rand.randint(0, H), rand.randint(0, W)]
+        # pick a number that is not in 42
+        while True:
+            # randint YG """ get random integer within range of numbers """ YG
+            start = [rand.randint(0, H), rand.randint(0, W)]
+            if not self.grid[start[0]][start[1]].blocked:
+                break
         self.grid[start[0]][start[1]].visited = True
         while True:
             start = self.kill(start)
@@ -169,5 +180,6 @@ class MazeGenerator:
             start = self.hunt()
             self.update()
             if start is None:
+                self.update(True)
                 break
             self.grid[start[0]][start[1]].visited = True

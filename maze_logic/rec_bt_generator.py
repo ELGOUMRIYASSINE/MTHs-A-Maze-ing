@@ -13,7 +13,6 @@ class Cell:
         self.visited = False
         self.blocked = False
 
-
     def __str__(self):
         bits = [self.left, self.bottom, self.right, self.top]
         binary_str = "".join(str(b) for b in bits)
@@ -27,15 +26,25 @@ class MazeGenerator:
         self.WIDTH = config['WIDTH']
         # self.save_file = config['SAVE_FILE']
         self.output_file = config['OUTPUT_FILE']
+        self.entry = config['ENTRY']
+        self.exit = config['EXIT']
         self.mode = mode
 
-    def update(self):
+    def update(self, final=False):
         with open(self.output_file, "w") as f:
             for i in range(self.HEIGHT):
                 if not i == 0:
                     f.write("\n")
                 for n in range(self.WIDTH):
                     f.write(str(self.grid[i][n]))
+            if final:
+                f.write("\n\n")
+                f.write(",".join(str(nbr) for nbr in self.entry))
+                f.write("\n")
+                f.write(",".join(str(nbr) for nbr in self.exit))
+                f.write("\n")
+                f.write("SWSESWSESWSSSEESEEENEESESEESSSEEESSSEEENNENEE")
+
 
     def generate_grid(self):
         for y in range(self.HEIGHT):
@@ -131,7 +140,12 @@ class MazeGenerator:
         H = self.HEIGHT - 1
         W = self.WIDTH - 1
 
-        start = [rand.randint(0, H), rand.randint(0, W)]
+        # start = [rand.randint(0, H), rand.randint(0, W)]
+        while True:
+            # randint YG """ get random integer within range of numbers """ YG
+            start = [rand.randint(0, H), rand.randint(0, W)]
+            if not self.grid[start[0]][start[1]].blocked:
+                break
         self.grid[start[0]][start[1]].visited = True
         self.kill(start)
-        self.update()
+        self.update(True)
