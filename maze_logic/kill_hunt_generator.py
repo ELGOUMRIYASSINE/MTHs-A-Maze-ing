@@ -171,29 +171,3 @@ class MazeGenerator:
             if start is None:
                 break
             self.grid[start[0]][start[1]].visited = True
-
-    # if __name__ == "__main__":
-    #     try:
-    #         if len(args.argv) == 2:
-    #             parser.parse_config(args.argv[1])
-    #         else:
-    #             parser.parse_config()
-    #     except Exception as e:
-    #         print(e)
-    #         exit()
-    #     generate_grid()
-    #     add_42()
-    #     H = parser.config['HEIGHT'] - 1
-    #     W = parser.config['WIDTH'] - 1
-
-    #     start = [rand.randint(0, H), rand.randint(0, W)]
-    #     full = False
-    #     grid[start[0]][start[1]].visited = True
-    #     while True:
-    #         start = kill(start)
-    #         grid[start[0]][start[1]].visited = True
-    #         start = hunt()
-    #         update()
-    #         if start is None:
-    #             break
-    #         grid[start[0]][start[1]].visited = True

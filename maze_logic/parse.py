@@ -1,3 +1,5 @@
+import math
+
 config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT', 'OUTPUT_FILE', 'PERFECT']
 config = {}
 
@@ -7,18 +9,32 @@ def check_path():
     height = config['HEIGHT']
     x, y = config['ENTRY']
     x2, y2 = config['EXIT']
-    if not (x == 0 or x == width - 1 or y == 0 or y == height - 1):
-        raise ValueError("ENTRY must be on the maze border")
-    if not (x2 == 0 or x2 == width - 1 or y2 == 0 or y2 == height - 1):
-        raise ValueError("EXIT must be on the maze border")
+    area_h, area_w = 5, 7
+
+    start_y = math.floor((config['HEIGHT'] - area_h) / 2)
+    start_x = math.floor((config['WIDTH'] - area_w) / 2)
+
+    # here I'm checking if entry and exit in the same point
     if x == x2 and y == y2:
-        raise ValueError("Entry or Exist Probleme")
+        raise ValueError("Entry or Exit Problem")
+    # I'm checking if entry and exit in the grid
+    if not (0 <= x <= width - 1 and 0 <= y <= height - 1):
+        raise ValueError("ENTRY not on the maze")
+    if not (0 <= x2 <= width - 1 and 0 <= y2 <= height - 1):
+        raise ValueError("EXIT not on the maze")
+    # I'm checking if entry and exit in the maze
+    if (start_x <= x <= start_x + area_w - 1) and (start_y <= y <= start_y + area_h - 1):
+        raise ValueError("ENTRY must be outside the 42")
+    if (start_x <= x2 <= start_x + area_w - 1) and (start_y <= y2 <= start_y + area_h - 1):
+        raise ValueError("EXIT must be outside the 42")
 
 
 def value_valid(key, value):
     if key in ['WIDTH', 'HEIGHT']:
         value = int(value)
-        if not (value <= 45 and value >= 8):
+        if key == 'WIDTH' and (value < 9 or value > 45):
+            return ValueError("Invalid value for key:", key) 
+        if key == 'HEIGHT' and (value < 7 or value > 45):
             raise ValueError("Invalid value for key:", key)
         config[key] = value
     if key in ['ENTRY', 'EXIT']:

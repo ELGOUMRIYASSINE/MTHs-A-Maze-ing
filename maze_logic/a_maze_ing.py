@@ -13,6 +13,7 @@ except Exception as e:
     exit()
     
 if __name__ == "__main__":
-    maze = RecBTGenerator(parser.config)
+    # maze = RecBTGenerator(parser.config)
+    maze = MazeGenerator(parser.config)
     maze.generate()
 
