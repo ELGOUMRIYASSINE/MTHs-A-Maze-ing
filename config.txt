@@ -1,0 +1,6 @@
+WIDTH=30
+HEIGHT=30
+ENTRY=0,3
+EXIT=0,9
+OUTPUT_FILE=maze_output.txt
+PERFECT=True

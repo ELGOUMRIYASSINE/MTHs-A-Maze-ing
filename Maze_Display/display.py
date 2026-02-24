@@ -2,7 +2,6 @@ import os
 import unicodedata
 
 
-
 # ANSI Colors
 RESET = "\033[0m"
 WHITE_BG = "\033[47m"
@@ -88,8 +87,8 @@ def parse_maze_output(filename):
 def get_path_coords(entry_x, entry_y, path_string):
     pass
 
-def render_maze(show_path=False, theme_idx=0):
-    matrix, meta = parse_maze_output("../maze_output.txt") # Use local file
+def render_maze(config, show_path=False, theme_idx=0):
+    matrix, meta = parse_maze_output(config['OUTPUT_FILE']) # Use local file
     if not matrix: return
     entry_pos = meta['entry']
     exit_pos = meta['exit']
@@ -144,34 +143,3 @@ def render_maze(show_path=False, theme_idx=0):
     line_bot += WALL
     print(line_bot)
     print()
-
-if __name__ == "__main__":
-    show_path = False
-    current_theme_idx = 0
-    while True:
-        # Clear screen (Optional, makes it look like a game)
-        os.system('cls' if os.name == 'nt' else 'clear')
-
-        render_maze(show_path, current_theme_idx)
-
-        print("=== A-Maze-ing ===")
-        print("1. Re-generate a new maze")
-        print("2. Show/Hide path")
-        print("3. Rotate maze colors")
-        print("4. Quit")
-
-        choice = input("Choice? (1-4): ")
-
-        match choice:
-            case "1":
-                # Call the generation script here
-                # os.system("python3 a_maze_ing.py config.txt")
-                pass
-            case "2":
-                show_path = not show_path # Toggle flag
-            case "3":
-                current_theme_idx = (current_theme_idx + 1) % len(THEMS)
-            case "4":
-                exit()
-            case _:
-                print("Invalid choice")

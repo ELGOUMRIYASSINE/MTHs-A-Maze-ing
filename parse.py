@@ -45,7 +45,7 @@ def value_valid(key, value):
     if key in ['WIDTH', 'HEIGHT']:
         value = int(value)
         if key == 'WIDTH' and (value < 9 or value > 45):
-            return ValueError("Invalid value for key:", key) 
+            return ValueError("Invalid value for key:", key)
         if key == 'HEIGHT' and (value < 7 or value > 45):
             raise ValueError("Invalid value for key:", key)
         config[key] = value

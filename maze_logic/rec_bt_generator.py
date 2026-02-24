@@ -1,4 +1,3 @@
-from html import parser
 import random as rand
 import math
 
