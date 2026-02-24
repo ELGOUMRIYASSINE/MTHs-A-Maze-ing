@@ -1,6 +1,6 @@
 import math
 
-config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT', 'OUTPUT_FILE', 'PERFECT']
+config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT', 'OUTPUT_FILE', 'PERFECT', 'SEED']
 config = {}
 
 
@@ -44,9 +44,9 @@ def check_path():
 def value_valid(key, value):
     if key in ['WIDTH', 'HEIGHT']:
         value = int(value)
-        if key == 'WIDTH' and (value < 9 or value > 45):
-            return ValueError("Invalid value for key:", key)
-        if key == 'HEIGHT' and (value < 7 or value > 45):
+        if key == 'WIDTH' and (value < 9 or value > 100):
+            return ValueError("Invalid value for key:", key) 
+        if key == 'HEIGHT' and (value < 7 or value > 100):
             raise ValueError("Invalid value for key:", key)
         config[key] = value
     if key in ['ENTRY', 'EXIT']:
@@ -67,6 +67,12 @@ def value_valid(key, value):
         else:
             raise ValueError("Invalid value for key:", key)
         config[key] = value
+    if key == 'SEED':
+        value = int(value)
+        if not isinstance(value, int):
+            raise ValueError("Invalid value for key:", key)
+        config[key] = value
+        
 
 
 def parse_config(config_path="config.txt"):
@@ -85,6 +91,7 @@ def parse_config(config_path="config.txt"):
             for key, value in config.items():
                 value_valid(key, value)
             check_path()
+        config['CONFIG_FILE'] = config_path
     except Exception as e:
         print(e)
         exit()

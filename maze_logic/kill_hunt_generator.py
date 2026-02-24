@@ -1,6 +1,11 @@
 import parse as parser
 import random as rand
 import math
+import sys
+
+# make the stack bigger to handle maxe maze size
+sys.setrecursionlimit(20000)
+
 
 
 class Cell:
@@ -21,28 +26,88 @@ class Cell:
 
 
 class MazeGenerator:
+    seed_tracker = 0
     def __init__(self, config):
+        self.seed_tracker += 1
         self.grid = []
         self.HEIGHT = config['HEIGHT']
         self.WIDTH = config['WIDTH']
         self.entry = config['ENTRY']
         self.exit = config['EXIT']
+        self.first_generation = True
+        self.seed = config['SEED']
+        self.perfect = config['PERFECT']
         self.output_file = config['OUTPUT_FILE']
 
-    def update(self, final=True):
+    def update(self):
         with open(self.output_file, "w") as f:
             for i in range(parser.config['HEIGHT']):
                 if not i == 0:
                     f.write("\n")
                 for n in range(parser.config['WIDTH']):
                     f.write(str(self.grid[i][n]))
-            if final:
-                f.write("\n\n")
-                f.write(",".join(str(nbr) for nbr in self.entry))
-                f.write("\n")
-                f.write(",".join(str(nbr) for nbr in self.exit))
-                f.write("\n")
-                f.write("SWSESWSESWSSSEESEEENEESESEESSSEEESSSEEENNENEE")
+            # if final:
+            f.write("\n\n")
+            f.write(",".join(str(nbr) for nbr in self.entry))
+            f.write("\n")
+            f.write(",".join(str(nbr) for nbr in self.exit))
+            f.write("\n")
+            f.write("SWSESWSESWSSSEESEEENEESESEESSSEEESSSEEENNENEE")
+
+    def make_inperfect(self):
+        walls_to_break = int(self.HEIGHT * self.WIDTH * 0.03)
+
+        i = 0
+        iterations = 0
+
+        dim = ["top", "bottom", "left", "right"]
+
+        while i < walls_to_break and iterations < 1000:
+            iterations += 1
+
+            y = rand.randint(1, self.HEIGHT - 2)
+            x = rand.randint(1, self.WIDTH - 2)
+
+            tmp_roots = dim.copy()
+            rand.shuffle(tmp_roots)
+
+            if self.grid[y][x].blocked:
+                continue
+
+            for root in tmp_roots:
+                if root == "top":
+                    if not self.grid[y-1][x].blocked:
+                        if self.grid[y][x].top == 1:
+                            self.grid[y][x].top = 0
+                            self.grid[y-1][x].bottom = 0
+                            i += 1
+                            break
+
+                if root == "bottom":
+                    if not self.grid[y+1][x].blocked:
+                        if self.grid[y][x].bottom == 1:
+                            self.grid[y][x].bottom = 0
+                            self.grid[y+1][x].top = 0
+                            i += 1
+                            break
+
+                if root == "left":
+                    if not self.grid[y][x-1].blocked:
+                        if self.grid[y][x].left == 1:
+                            self.grid[y][x].left = 0
+                            self.grid[y][x-1].right = 0
+                            i += 1
+                            break
+
+                if root == "right":
+                    if not self.grid[y][x+1].blocked:
+                        if self.grid[y][x].right == 1:
+                            self.grid[y][x].right = 0
+                            self.grid[y][x+1].left = 0
+                            i += 1
+                            break
+        self.update()
+
 
     def generate_grid(self):
         for y in range(parser.config['HEIGHT']):
@@ -163,6 +228,13 @@ class MazeGenerator:
                     self.grid[start_y + p_y][start_x + p_x].blocked = True
 
     def generate(self):
+        if self.first_generation:
+            rand.seed(self.seed)
+            self.first_generation = False
+        else:
+            self.seed = rand.randint(-sys.maxsize, sys.maxsize)
+            rand.seed(self.seed)
+        self.grid = []
         self.generate_grid()
         self.add_42()
         H = parser.config['HEIGHT'] - 1
@@ -180,6 +252,8 @@ class MazeGenerator:
             start = self.hunt()
             self.update()
             if start is None:
-                self.update(True)
+                self.update()
                 break
             self.grid[start[0]][start[1]].visited = True
+        if self.perfect == False:
+            self.make_inperfect()

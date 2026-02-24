@@ -18,13 +18,16 @@ def checker():
 checker()
 
 if __name__ == "__main__":
-    #1st algo:
-    #2nd algo (hunt and kill):
     show_path = False
     current_theme_idx = 0
     gen_algo = 1
+
     maze = RecBTGenerator(parser.config)
-    maze.generate()
+    # maze.generate()
+
+    maze2 = MazeGenerator(parser.config)
+    maze2.generate()
+
     while True:
         # Clear screen (Optional, makes it look like a game)
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -42,13 +45,11 @@ if __name__ == "__main__":
 
         match choice:
             case "1":
+                checker()
                 if gen_algo:
-                    checker()
-                    maze = RecBTGenerator(parser.config)
+                    maze.generate()
                 else:
-                    checker()
-                    maze = MazeGenerator(parser.config)
-                maze.generate()
+                    maze2.generate()
             case "2":
                 show_path = not show_path # Toggle flag
             case "3":
