@@ -1,6 +1,6 @@
 import os
 import unicodedata
-
+from .. import parse
 
 # ANSI Colors
 RESET = "\033[0m"
@@ -49,46 +49,11 @@ def _fit_cell(text: str, cell_width: int = 3) -> str:
     # Too wide: fallback to a single ASCII marker
     return " ? "[:cell_width]
 
-def parse_maze_output(filename):
-    matrix = []
-    meta = {}
-    try:
-        with open(filename, 'r') as file:
-            lines = [l.strip() for l in file.readlines()]
-            i = 0
-
-            # Parse Maze grids
-            while i < len(lines) and lines[i]:
-                row = []
-                for c in lines[i]:
-                    value = int(c, 16)
-                    value = format(value, "04b")
-                    bits = [int(x) for x in value]
-                    row.append(bits)
-                matrix.append(row)
-                i += 1
-
-            # Skip potential empty lines
-            while i < len(lines) and not lines[i]:
-                i += 1
-
-            # Parse metadata
-            if i + 2 < len(lines):
-                # Convert coords to integers immediately here for safety
-                meta['entry'] = tuple(map(int, lines[i].split(',')))
-                meta['exit'] = tuple(map(int, lines[i+1].split(',')))
-                meta['path'] = lines[i+2]
-
-    except FileNotFoundError:
-        print("Error: File not found")
-        return [], {}
-    return matrix, meta
-
 def get_path_coords(entry_x, entry_y, path_string):
     pass
 
 def render_maze(config, show_path=False, theme_idx=0):
-    matrix, meta = parse_maze_output(config['OUTPUT_FILE']) # Use local file
+    matrix, meta = parse.parse_maze_output(config['OUTPUT_FILE'])
     if not matrix: return
     entry_pos = meta['entry']
     exit_pos = meta['exit']

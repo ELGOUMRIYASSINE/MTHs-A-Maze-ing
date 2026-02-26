@@ -45,7 +45,7 @@ def value_valid(key, value):
     if key in ['WIDTH', 'HEIGHT']:
         value = int(value)
         if key == 'WIDTH' and (value < 9 or value > 100):
-            return ValueError("Invalid value for key:", key) 
+            return ValueError("Invalid value for key:", key)
         if key == 'HEIGHT' and (value < 7 or value > 100):
             raise ValueError("Invalid value for key:", key)
         config[key] = value
@@ -72,7 +72,7 @@ def value_valid(key, value):
         if not isinstance(value, int):
             raise ValueError("Invalid value for key:", key)
         config[key] = value
-        
+
 
 
 def parse_config(config_path="config.txt"):
@@ -96,6 +96,40 @@ def parse_config(config_path="config.txt"):
         print(e)
         exit()
 
+def parse_maze_output(filename):
+    matrix = []
+    meta = {}
+    try:
+        with open(filename, 'r') as file:
+            lines = [l.strip() for l in file.readlines()]
+            i = 0
+
+            # Parse Maze grids
+            while i < len(lines) and lines[i]:
+                row = []
+                for c in lines[i]:
+                    value = int(c, 16)
+                    value = format(value, "04b")
+                    bits = [int(x) for x in value]
+                    row.append(bits)
+                matrix.append(row)
+                i += 1
+
+            # Skip potential empty lines
+            while i < len(lines) and not lines[i]:
+                i += 1
+
+            # Parse metadata
+            if i + 2 < len(lines):
+                # Convert coords to integers immediately here for safety
+                meta['entry'] = tuple(map(int, lines[i].split(',')))
+                meta['exit'] = tuple(map(int, lines[i+1].split(',')))
+                meta['path'] = lines[i+2]
+
+    except FileNotFoundError:
+        print("Error: File not found")
+        return [], {}
+    return matrix, meta
 
 if __name__ == "__main__":
     parse_config()

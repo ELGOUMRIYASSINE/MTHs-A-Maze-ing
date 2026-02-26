@@ -1,4 +1,11 @@
-def create_binary_matrix(hex_matrix, entry_pos, exit_pos):
+from .. import parse
+filename = parse.config['OUTPUT_FILE']
+hex_matrix, meta = parse.parse_maze_output(filename)
+
+def create_binary_matrix():
+
+    entry_pos = meta['entry']
+    exit_pos = meta['exit']
 
     height = len(hex_matrix)
     width = len(hex_matrix[0])
@@ -29,5 +36,7 @@ def create_binary_matrix(hex_matrix, entry_pos, exit_pos):
 
     binary_grid[entry_y * 2 + 1][entry_x * 2 + 1] = 'A'
     binary_grid[exit_y * 2 + 1][exit_x * 2 + 1] = 'B'
-
-    return binary_grid
+    with open("binary_grid", "w") as f:
+        f.write(n)
+    print(binary_grid)
+    # return binary_grid
