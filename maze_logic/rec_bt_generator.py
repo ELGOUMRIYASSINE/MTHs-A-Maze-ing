@@ -32,7 +32,7 @@ class MazeGenerator:
         self.exit = config['EXIT']
         self.mode = mode
 
-    def update(self):
+    def update(self, path_string=None):
         with open(self.output_file, "w") as f:
             for i in range(self.HEIGHT):
                 if not i == 0:
@@ -44,7 +44,11 @@ class MazeGenerator:
             f.write("\n")
             f.write(",".join(str(nbr) for nbr in self.exit))
             f.write("\n")
-            f.write("SWSESWSESWSSSEESEEENEESESEESSSEEESSSEEENNENEE")
+            # f.write("SWSESWSESWSSSEESEEENEESESEESSSEEESSSEEENNENEE")
+            if path_string:
+                f.write(path_string)
+
+
 
     def make_inperfect(self):
         walls_to_break = int(self.HEIGHT * self.WIDTH * 0.03)

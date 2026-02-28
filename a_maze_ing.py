@@ -1,11 +1,12 @@
 import parse as parser
 from maze_logic.kill_hunt_generator import MazeGenerator
 from maze_logic.rec_bt_generator import MazeGenerator as RecBTGenerator
+from maze_logic import maze_solver
 from Maze_Display import display
 import sys
 import os
 
-# parsing part
+
 def checker():
     try:
         if len(sys.argv) == 2:
@@ -15,6 +16,8 @@ def checker():
     except Exception as e:
         print(e)
         exit()
+
+
 checker()
 
 if __name__ == "__main__":
@@ -23,17 +26,20 @@ if __name__ == "__main__":
     gen_algo = 1
 
     maze = RecBTGenerator(parser.config)
-    # maze.generate()
+    maze.generate()
+    path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
+    maze.update(path_string)
 
     maze2 = MazeGenerator(parser.config)
     maze2.generate()
+    path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
+    maze2.update(path_string)
 
     while True:
         # Clear screen (Optional, makes it look like a game)
         os.system('cls' if os.name == 'nt' else 'clear')
 
-        display.render_maze(parser.config, show_path, current_theme_idx)
-
+        display.render_maze(parser.config, show_path, current_theme_idx, path_coords, path_string)
         print("=== A-Maze-ing ===")
         print("1. Re-generate a new maze")
         print("2. Show/Hide path")
@@ -48,10 +54,14 @@ if __name__ == "__main__":
                 checker()
                 if gen_algo:
                     maze.generate()
+                    path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
+                    maze.update(path_string)
                 else:
                     maze2.generate()
+                    path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
+                    maze2.update(path_string)
             case "2":
-                show_path = not show_path # Toggle flag
+                show_path = not show_path  # Toggle flag
             case "3":
                 current_theme_idx = (current_theme_idx + 1) % len(display.THEMS)
             case "4":
