@@ -2,7 +2,7 @@ import random as rand
 import sys
 from .MazeGenerator import MazeGenerator
 
-sys.setrecursionlimit(20000)
+sys.setrecursionlimit(10000)
 class RecBTGenerator(MazeGenerator):
     def kill(self, pos):
         self.grid[pos[0]][pos[1]].visited = True

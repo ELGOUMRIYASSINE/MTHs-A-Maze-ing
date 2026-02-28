@@ -20,6 +20,7 @@ def checker():
 
 
 checker()
+# print(parser.config)
 
 if __name__ == "__main__":
     show_path = False

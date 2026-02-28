@@ -5,7 +5,7 @@ import unicodedata
 RESET = "\033[0m"
 WHITE_BG = "\033[47m"
 BLACK_BG = "\033[40m"
-BLUE_BG = "\033[44m"
+BLUE_BG = "\033[43m"
 RED_BG = "\033[41m"
 GREEN_BG = "\033[42m"
 YELLOW_BG = "\033[43m"

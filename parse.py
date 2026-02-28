@@ -7,6 +7,8 @@ config = {}
 def check_path():
     width = config['WIDTH']
     height = config['HEIGHT']
+    if not 'PATTERN' in config:
+        config['PATTERN'] = 42
     x, y = config['ENTRY']
     x2, y2 = config['EXIT']
 
@@ -19,8 +21,8 @@ def check_path():
     if not (0 <= x2 <= width - 1 and 0 <= y2 <= height - 1):
         raise ValueError("EXIT not on the maze")
 
-    # I'm checking if entry and exit in 42
-    pattern = [
+    # I'm checking if entry and exit in 42 or 1337
+    pattern_42 = [
         [1, 0, 1, 0, 1, 1, 1],
         [1, 0, 1, 0, 0, 0, 1],
         [1, 1, 1, 0, 1, 1, 1],
@@ -28,7 +30,19 @@ def check_path():
         [0, 0, 1, 0, 1, 1, 1]
     ]
 
-    area_h, area_w = 5, 7
+    pattern_1337 = [
+        [0,0,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1],
+        [0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
+        [1,0,1,0,1,1,1,1,0,1,1,1,1,0,0,0,0,0,1],
+        [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
+        [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
+        [0,0,1,0,1,1,1,1,0,1,1,1,1,0,0,0,0,0,1],
+    ]
+    if config['PATTERN'] == 42:
+        pattern = pattern_42
+    else:
+        pattern = pattern_1337
+    area_h, area_w = len(pattern), len(pattern[0])
     start_y = math.floor((config['HEIGHT'] - area_h) / 2)
     start_x = math.floor((config['WIDTH'] - area_w) / 2)
 
@@ -55,10 +69,18 @@ def value_valid(key, value):
             return False
         config[key] = (int(value[0]), int(value[1]))
     if key == 'OUTPUT_FILE':
+        if not value:
+            raise ValueError("No Outputfile Provided")
         try:
             open(value, 'w')
+        except PermissionError:
+            raise PermissionError("Check Output file permissions ! cant write")
+        except ValueError:
+            raise ValueError("Invalide Output file Value")
+        except IsADirectoryError:
+            raise IsADirectoryError("Output file given is a directory")
         except Exception:
-            raise ValueError("Invalid file for key:", key)
+            raise Exception("Somthing Went Wrong With Output File Key")
     if key == 'PERFECT':
         if (value == 'True'):
             value = True
@@ -72,29 +94,44 @@ def value_valid(key, value):
         if not isinstance(value, int):
             raise ValueError("Invalid value for key:", key)
         config[key] = value
-
+    if key == 'PATTERN':
+        number = int(value)
+        if number == 42 or number == 1337:
+            config[key] = number
+        else:
+            config[key] = 42
 
 
 def parse_config(config_path="config.txt"):
     try:
         with open(config_path, 'r') as config_file:
-            for line in config_file:
-                if (line[0] == '#' or line.strip() == ''):
-                    continue
-                data = line.split("=")
-                if (len(data) != 2 or not data[0] in config_keys):
-                    raise ValueError("Invalid config format")
-                config[data[0]] = data[1].split("#")[0].rstrip('\n')
-            for key in config_keys:
-                if key not in config:
-                    raise ValueError("Missing key(s) in config")
-            for key, value in config.items():
-                value_valid(key, value)
-            check_path()
+            try:
+                for line in config_file:
+                    if (line[0] == '#' or line.strip() == ''):
+                        continue
+                    data = line.split("=")
+                    # if (len(data) != 2 or not data[0] in config_keys):
+                    if (len(data) != 2):
+                        raise ValueError("Invalid config format")
+                    config[data[0]] = data[1].split("#")[0].rstrip('\n')
+                for key in config_keys:
+                    if key not in config:
+                        raise ValueError(f"Missing {key} in config file")
+                for key, value in config.items():
+                    value_valid(key, value)
+                check_path()
+            except Exception as e:
+                print(e)
+                exit()
         config['CONFIG_FILE'] = config_path
-    except Exception as e:
-        print(e)
-        exit()
+    except PermissionError:
+        raise PermissionError("Check Config File permissions ! Cant Write")
+    except ValueError:
+        raise ValueError("Invalide Config file Value")
+    except IsADirectoryError:
+        raise IsADirectoryError("Config file Given Is A Directory")
+    except Exception:
+        raise Exception("Somthing Went Wrong With Config file Key")
 
 def parse_maze_output(filename):
     matrix = []

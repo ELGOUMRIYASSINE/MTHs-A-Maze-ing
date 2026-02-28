@@ -18,6 +18,10 @@ class MazeGenerator(ABC):
         self.seed = config['SEED']
         self.perfect = config['PERFECT']
         self.output_file = config['OUTPUT_FILE']
+        if config['PATTERN']:
+            self.pattern = config['PATTERN']
+        else:
+            self.pattern = 42
     
     @abstractmethod
     def generate(self):
@@ -192,17 +196,33 @@ class MazeGenerator(ABC):
         return None
 
     def add_42(self):
-        area_h, area_w = 5, 7
-        start_y = math.floor((parser.config['HEIGHT'] - area_h) / 2)
-        start_x = math.floor((parser.config['WIDTH'] - area_w) / 2)
-
-        pattern = [
+        
+        pattern_42 = [
             [1, 0, 1, 0, 1, 1, 1],
             [1, 0, 1, 0, 0, 0, 1],
             [1, 1, 1, 0, 1, 1, 1],
             [0, 0, 1, 0, 1, 0, 0],
             [0, 0, 1, 0, 1, 1, 1]
         ]
+
+        pattern_1337 = [
+            [0,0,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1],
+            [0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
+            [1,0,1,0,1,1,1,1,0,1,1,1,1,0,0,0,0,0,1],
+            [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
+            [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
+            [0,0,1,0,1,1,1,1,0,1,1,1,1,0,0,0,0,0,1],
+        ]
+        
+        if self.pattern == 42:
+            pattern = pattern_42
+        else:
+            pattern = pattern_1337
+
+        area_h, area_w = len(pattern), len(pattern[0])
+        start_y = math.floor((parser.config['HEIGHT'] - area_h) / 2)
+        start_x = math.floor((parser.config['WIDTH'] - area_w) / 2)
+
 
         for p_y in range(area_h):
             for p_x in range(area_w):
