@@ -1,8 +1,9 @@
 import parse as parser
-from maze_logic.kill_hunt_generator import MazeGenerator
-from maze_logic.rec_bt_generator import MazeGenerator as RecBTGenerator
+from maze_logic.kill_hunt_generator import KillHuntGenerator
+from maze_logic.rec_bt_generator import RecBTGenerator
 from maze_logic import maze_solver
 from Maze_Display import display
+# from maze_logic.Cell import Cell
 import sys
 import os
 
@@ -30,10 +31,12 @@ if __name__ == "__main__":
     path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
     maze.update(path_string)
 
-    maze2 = MazeGenerator(parser.config)
+    maze2 = KillHuntGenerator(parser.config)
     maze2.generate()
     path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
     maze2.update(path_string)
+
+    print(maze2.get_walk_history())
 
     while True:
         # Clear screen (Optional, makes it look like a game)
