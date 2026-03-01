@@ -1,6 +1,7 @@
 import parse as parser
 import random as rand
 from .MazeGenerator import MazeGenerator
+import sys
 
 class KillHuntGenerator(MazeGenerator):
     def kill(self, pos):

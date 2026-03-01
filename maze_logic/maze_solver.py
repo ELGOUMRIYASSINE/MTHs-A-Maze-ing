@@ -75,7 +75,7 @@ def create_binary_matrix(output_file):
     return binary_grid
 
 
-def solve_maze_bfs(output_file):
+def solve_maze_bfs(output_file, raw_start, raw_exit):
     
     binary_grid = create_binary_matrix(output_file)
 
@@ -83,8 +83,8 @@ def solve_maze_bfs(output_file):
         print("Stopping: Cannot solve the maze because the matrix is empty (File missing).")
         exit(1)
 
-    raw_start = parser.config['ENTRY']
-    raw_exit = parser.config['EXIT']
+    # raw_start = parser.config['ENTRY']
+    # raw_exit = parser.config['EXIT']
 
     # 2. Scale them up to the expanded binary grid!
     # raw[0] is X (column), raw[1] is Y (row)

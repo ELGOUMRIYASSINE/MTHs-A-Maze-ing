@@ -1,14 +1,17 @@
 import unicodedata
-
+import time
+import sys
 
 # ANSI Colors
 RESET = "\033[0m"
 WHITE_BG = "\033[47m"
 BLACK_BG = "\033[40m"
-BLUE_BG = "\033[43m"
+BLUE_BG = "\033[44m"
 RED_BG = "\033[41m"
 GREEN_BG = "\033[42m"
 YELLOW_BG = "\033[43m"
+CYAN_BG = "\033[46m"
+CHAR_WATER = f"{CYAN_BG} {RESET}"
 
 THEMS = [
     # Classic
@@ -20,11 +23,29 @@ THEMS = [
 ]
 
 CHAR = f"{WHITE_BG} {RESET}"
-CHAR_SOLUTION = f"{GREEN_BG} {RESET}"
+CHAR_SOLUTION = f"{CYAN_BG} {RESET}"
 SPACE = " "
 TOM = "🐱"   # Entry
 JERRY = "🐭"  # Exit
 
+def setup_solid_matrix(animation_data):
+    max_row = max(step[0] for step in animation_data)
+    max_col = max(step[1] for step in animation_data )
+
+    width = max_col + 1
+    height = max_row + 1
+    
+    return ([[[1,1,1,1] for _ in range(width)] for _ in range(height)])
+
+def break_wall(grid, r, c, direction):
+    if direction == 'l':
+        grid[r][c][0] = 0
+    elif direction == 'b':
+        grid[r][c][1] = 0
+    elif direction == 'r':
+        grid[r][c][2] = 0
+    elif direction == 't':
+        grid[r][c][3] = 0
 
 def _display_width(text: str) -> int:
     width = 0
@@ -47,6 +68,38 @@ def _fit_cell(text: str, cell_width: int = 3) -> str:
         return text + (SPACE * (cell_width - w))
     return " ? "[:cell_width]
 
+from collections import deque
+
+def get_water_history(matrix, start_pos, exit_pos):
+    """Runs BFS and returns the exact order cells were explored"""
+    queue = deque([start_pos])
+    visited = set([start_pos])
+    history = []  # This is our video timeline!
+
+    while queue:
+        c, r = queue.popleft() # c is X (col), r is Y (row)
+        history.append((c, r))
+
+        if (c, r) == exit_pos:
+            break
+
+        west, south, east, north = matrix[r][c]
+
+        # Check all 4 directions (0 means no wall)
+        neighbors = []
+        if not west: neighbors.append((c - 1, r))
+        if not south: neighbors.append((c, r + 1))
+        if not east: neighbors.append((c + 1, r))
+        if not north: neighbors.append((c, r - 1))
+
+        for nc, nr in neighbors:
+            # Ensure we stay inside the grid
+            if 0 <= nr < len(matrix) and 0 <= nc < len(matrix[0]):
+                if (nc, nr) not in visited:
+                    visited.add((nc, nr))
+                    queue.append((nc, nr))
+                    
+    return history
 
 def parse_maze_output(filename):
     matrix = []
@@ -81,8 +134,11 @@ def parse_maze_output(filename):
 
 def get_path_coords(entry_x, entry_y, path_string):
     x, y = entry_x, entry_y
-    coords = []
+    
+    # We keep this so the path touches the Cat!
+    coords = [(x, y)] 
 
+    # Remove the [1::2] hack! Just read every letter normally.
     for ch in path_string.strip():
         if ch == "N":
             y -= 1
@@ -98,22 +154,164 @@ def get_path_coords(entry_x, entry_y, path_string):
 
     return coords
 
-
-def render_maze(config, show_path=False, theme_idx=0, path_coords=None, path_string=None):
-    matrix, meta = parse_maze_output(config['OUTPUT_FILE'])
-    if not matrix:
-        return
+def animate_water_search(matrix, meta, theme_idx=0):
     entry_pos = meta['entry']
     exit_pos = meta['exit']
-    path_coords = set()
-    if show_path and path_string:
-        path_coords = set(
-            get_path_coords(entry_pos[0], entry_pos[1], path_string),
-        )
+    
+    # 1. Get the timeline of the flood
+    flood_history = get_water_history(matrix, entry_pos, exit_pos)
+    
     theme = THEMS[theme_idx]
     wall_color = f'{theme["wall"]} {RESET}'
     solid_color = f'{theme["solid"]} {RESET}'
     space_color = f'{theme["space"]} {RESET}'
+
+    current_water = set()
+
+    for step in flood_history:
+        current_water.add(step)
+        
+        sys.stdout.write("\033[H")
+        out = ""
+        
+        for r_idx, row in enumerate(matrix):
+            line_top = ""
+            line_mid = ""
+            for c_idx, cell in enumerate(row):
+                west, south, east, north = cell
+                
+                is_water = (c_idx, r_idx) in current_water
+                water_north = (c_idx, r_idx - 1) in current_water
+                water_west = (c_idx - 1, r_idx) in current_water
+
+                line_top += wall_color
+                if is_water and water_north and not north:
+                    line_top += CHAR_WATER * 3 
+                else:
+                    line_top += wall_color * 3 if north else space_color * 3
+
+                if is_water and water_west and not west:
+                    line_mid += CHAR_WATER 
+                else:
+                    line_mid += wall_color if west else space_color
+
+                if (c_idx, r_idx) == entry_pos:
+                    line_mid += _fit_cell(TOM)
+                elif (c_idx, r_idx) == exit_pos:
+                    line_mid += _fit_cell(JERRY)
+                elif is_water:
+                    line_mid += CHAR_WATER * 3
+                else:
+                    line_mid += space_color * 3
+        
+            line_top += f"{wall_color}\n"
+            line_mid += f"{wall_color}\n"
+            out += line_top + line_mid
+
+        line_bot = ""
+        last_row = matrix[-1]
+        for cell in last_row:
+            west, south, east, north = cell
+            line_bot += wall_color
+            line_bot += wall_color * 3 if south else space_color * 3
+        line_bot += f"{wall_color}\n"
+        out += line_bot
+        
+        sys.stdout.write(out)
+        sys.stdout.flush()
+        
+        time.sleep(0.04)
+
+def render_frame(matrix, theme_idx=0, show_path=False):
+    # This stops the terminal from scroling
+    sys.stdout.write("\033[H")
+
+    theme = THEMS[theme_idx]
+    wall_color = f"{theme["wall"]} {RESET}"
+    solid_color = f"{theme["solid"]} {RESET}"
+    space_color = f"{theme["space"]} {RESET}"
+
+    out = ""
+    for r_idx, row in enumerate(matrix):
+        line_top = ""
+        line_mid = ""
+        for c_idx, cell in enumerate(row):
+            west, south, east, north = cell
+            is_solid = (west and south and east and north)
+
+            line_top += wall_color
+            line_top += wall_color * 3 if north else space_color * 3
+            line_mid += wall_color if west else space_color
+
+            if is_solid:
+                line_mid += solid_color * 3
+            else:
+                line_mid += space_color * 3
+            
+        line_top += f"{wall_color}\n"
+        line_mid += f"{wall_color}\n"
+
+        out += line_top + line_mid
+
+    line_bot = ""
+    last_row = matrix[-1]
+    for cell in last_row:
+        west, south, east, north = cell
+        line_bot += wall_color
+        line_bot += wall_color * 3 if south else space_color * 3
+    line_bot += f"{wall_color}\n"
+    out += line_bot
+                       
+    sys.stdout.write(out)
+    sys.stdout.flush()
+
+def animate_maze_generation(animation_data):
+    matrix = setup_solid_matrix(animation_data)
+
+    sys.stdout.write("\033[2J")
+
+    for step in animation_data:
+        r, c, direction = step
+
+        break_wall(matrix, r, c, direction)
+
+        # Draw the updated matrix to the screen
+        render_frame(matrix)
+        
+        time.sleep(0.02)
+
+def render_maze(config, show_path=False, theme_idx=0, path_coords=None, path_string=None, animation_data=None):
+    matrix, meta = parse_maze_output(config['OUTPUT_FILE'])
+    if not matrix:
+        return
+
+    if animation_data:
+        animate_maze_generation(animation_data)
+        time.sleep(0.5)
+        sys.stdout.write("\033[H")
+        sys.stdout.flush()
+
+    if show_path:
+        animate_water_search(matrix, meta, theme_idx)
+        time.sleep(0.5)
+        sys.stdout.write("\033[H")
+        sys.stdout.flush()
+
+    entry_pos = meta['entry']
+    exit_pos = meta['exit']
+    path_coords_set = set()
+    
+    if show_path and path_string:
+        path_coords_set = set(
+            get_path_coords(entry_pos[0], entry_pos[1], path_string),
+        )
+        
+    theme = THEMS[theme_idx]
+    wall_color = f'{theme["wall"]} {RESET}'
+    solid_color = f'{theme["solid"]} {RESET}'
+    space_color = f'{theme["space"]} {RESET}'
+
+    out = ""
 
     for r_idx, row in enumerate(matrix):
         line_top = ""
@@ -122,9 +320,9 @@ def render_maze(config, show_path=False, theme_idx=0, path_coords=None, path_str
             west, south, east, north = cell
             is_solid = (west and south and east and north)
             
-            is_path = show_path and (c_idx, r_idx) in path_coords
-            path_north = show_path and (c_idx, r_idx - 1) in path_coords
-            path_west = show_path and (c_idx - 1, r_idx) in path_coords
+            is_path = show_path and (c_idx, r_idx) in path_coords_set
+            path_north = show_path and (c_idx, r_idx - 1) in path_coords_set
+            path_west = show_path and (c_idx - 1, r_idx) in path_coords_set
 
             line_top += wall_color
             if is_path and path_north and not north:
@@ -148,11 +346,10 @@ def render_maze(config, show_path=False, theme_idx=0, path_coords=None, path_str
             else:
                 line_mid += space_color * 3
     
-        line_top += wall_color
-        line_mid += wall_color
+        line_top += f"{wall_color}\n"
+        line_mid += f"{wall_color}\n"
 
-        print(line_top)
-        print(line_mid)
+        out += line_top + line_mid
 
     line_bot = ""
     last_row = matrix[-1]
@@ -160,6 +357,9 @@ def render_maze(config, show_path=False, theme_idx=0, path_coords=None, path_str
         west, south, east, north = cell
         line_bot += wall_color
         line_bot += wall_color * 3 if south else space_color * 3
-    line_bot += wall_color
-    print(line_bot)
+    line_bot += f"{wall_color}\n"
+    out += line_bot
+    
+    sys.stdout.write(out)
+    sys.stdout.flush()
     print()
