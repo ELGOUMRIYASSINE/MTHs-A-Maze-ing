@@ -192,11 +192,13 @@ class MazeGenerator(ABC):
             [0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
         ]
 
-        if self.pattern == 42:
-            pattern = pattern_42
-        else:
+        pattern = pattern_42
+        if self.pattern == 1337:
             pattern = pattern_1337
 
+        if not (self.WIDTH > len(pattern[0]) + 1 and self.HEIGHT > len(pattern) + 1):
+            return
+       
         area_h, area_w = len(pattern), len(pattern[0])
         start_y = math.floor((self.HEIGHT - area_h) / 2)
         start_x = math.floor((self.WIDTH - area_w) / 2)

@@ -34,62 +34,72 @@ if __name__ == "__main__":
     path_string = ""
 
     def generate_current_maze():
-        global animation_data, path_coords, path_string
-        active_maze = maze_rec if gen_algo else maze_kill
-        
-        # 1. Generate the maze
-        active_maze.generate()
-        
-        # 2. Read the file to find where Tom and Jerry actually spawned
-        _, meta = display.parse_maze_output(parser.config['OUTPUT_FILE'])
-        
-        # 3. Pass the true entry/exit to the solver
-        path_string, path_coords = maze_solver.solve_maze_bfs(
-            parser.config['OUTPUT_FILE'], 
-            meta['entry'], 
-            meta['exit']
-        )
-        
-        active_maze.update(path_string)
-        animation_data = active_maze.get_walk_history()
+            global animation_data, path_coords, path_string
+
+            # THE FIX: Create a BRAND NEW instance every time this is called!
+            # This guarantees the old history is completely forgotten.
+            if gen_algo:
+                active_maze = RecBTGenerator(parser.config)
+            else:
+                active_maze = KillHuntGenerator(parser.config)
+
+            # 1. Generate the maze
+            active_maze.generate()
+
+            # 2. Read the true coordinates
+            _, meta = display.parse_maze_output(parser.config['OUTPUT_FILE'])
+
+            # 3. Solve using true coordinates
+            path_string, path_coords = maze_solver.solve_maze_bfs(
+                parser.config['OUTPUT_FILE'],
+                meta['entry'],
+                meta['exit']
+            )
+
+            # 4. Update and get the CLEAN history
+            active_maze.update(path_string)
+            animation_data = active_maze.get_walk_history()
 
     # Generate the very first maze when the program starts
     generate_current_maze()
 
-    while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
+    try:
+        while True:
+            os.system('cls' if os.name == 'nt' else 'clear')
 
-        # Pass our variables to the display
-        display.render_maze(parser.config, show_path, current_theme_idx, path_coords, path_string, animation_data)
-        
-        # THE MAGIC TRICK: Immediately set animation_data to None!
-        # This prevents the maze from slowly re-animating when we just change colors or toggle the path.
-        animation_data = None
+            # Pass our variables to the display
+            display.render_maze(parser.config, show_path, current_theme_idx, path_coords, path_string, animation_data)
 
-        print("=== A-Maze-ing ===")
-        print(f"Algorithm: {'Recursive Backtracking' if gen_algo else 'Kill & Hunt'}")
-        print("1. Re-generate a new maze")
-        print("2. Show/Hide path")
-        print("3. Rotate maze colors")
-        print("4. Switch generation algorithm")
-        print("5. Quit")
+            # THE MAGIC TRICK: Immediately set animation_data to None!
+            # This prevents the maze from slowly re-animating when we just change colors or toggle the path.
+            animation_data = None
 
-        choice = input("Choice? (1-5): ")
+            print("=== A-Maze-ing ===")
+            print(f"Algorithm: {'Recursive Backtracking' if gen_algo else 'Kill & Hunt'}")
+            print("1. Re-generate a new maze")
+            print("2. Show/Hide path")
+            print("3. Rotate maze colors")
+            print("4. Switch generation algorithm")
+            print("5. Quit")
 
-        match choice:
-            case "1":
-                # Re-parse config if you need fresh width/height
-                generate_current_maze()
-            case "2":
-                show_path = not show_path
-            case "3":
-                current_theme_idx = (current_theme_idx + 1) % len(display.THEMS)
-            case "4":
-                gen_algo = not gen_algo
-                # Automatically generate a new maze to show off the switched algorithm!
-                generate_current_maze() 
-            case "5":
-                print("Goodbye!")
-                exit()
-            case _:
-                print("Invalid choice")
+            choice = input("Choice? (1-5): ")
+
+            match choice:
+                case "1":
+                    # Re-parse config if you need fresh width/height
+                    generate_current_maze()
+                case "2":
+                    show_path = not show_path
+                case "3":
+                    current_theme_idx = (current_theme_idx + 1) % len(display.THEMS)
+                case "4":
+                    gen_algo = not gen_algo
+                    # Automatically generate a new maze to show off the switched algorithm!
+                    generate_current_maze()
+                case "5":
+                    print("Goodbye!")
+                    exit()
+                case _:
+                    print("Invalid choice")
+    except KeyboardInterrupt:
+        sys.exit()

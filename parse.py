@@ -49,23 +49,30 @@ def check_path():
         [0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
     ]
 
-    pattern = pattern_42 if config["PATTERN"] == 42 else pattern_1337
+    pattern = pattern_42
+    if config['PATTERN'] == 1337:
+        pattern = pattern_1337
 
     area_h = len(pattern)
     area_w = len(pattern[0])
 
+    if not (width > area_w + 1 and height > area_h + 1):
+        return
+
     start_y = math.floor((height - area_h) / 2)
     start_x = math.floor((width - area_w) / 2)
 
+    
     for p_y in range(area_h):
         for p_x in range(area_w):
-            if pattern[p_y][p_x] == 1:
-                if start_y + p_y == y and start_x + p_x == x:
-                    config_error("ENTRY cannot be placed inside"
-                                 "the pattern area.")
-                if start_y + p_y == y2 and start_x + p_x == x2:
-                    config_error("EXIT cannot be placed inside the "
-                                 "pattern area.")
+            if pattern[p_y][p_x] == 0:
+                continue
+            if start_y + p_y == y and start_x + p_x == x:
+                config_error("ENTRY cannot be placed inside"
+                                "the pattern area.")
+            if start_y + p_y == y2 and start_x + p_x == x2:
+                config_error("EXIT cannot be placed inside the "
+                                "pattern area.")
 
 
 def value_valid(key, value):
@@ -77,11 +84,11 @@ def value_valid(key, value):
         except ValueError:
             config_error(f"{key} must be a valid integer number.")
 
-        if key == "WIDTH" and not (9 <= value <= 100):
-            config_error("WIDTH must be between 9 and 100.")
+        if key == "WIDTH" and not (3 <= value <= 55):
+            config_error("WIDTH must be between 3 and 55.")
 
-        if key == "HEIGHT" and not (7 <= value <= 100):
-            config_error("HEIGHT must be between 7 and 100.")
+        if key == "HEIGHT" and not (3 <= value <= 55):
+            config_error("HEIGHT must be between 3 and 55.")
 
         config[key] = value
 
@@ -132,17 +139,17 @@ def value_valid(key, value):
         except ValueError:
             config_error("PATTERN must be either 42 or 1337.")
 
+        config[key] = number
         # if number not in [42, 1337]:
         #     config_error("PATTERN must be either 42 or 1337.")
 
-        if number == 1337:
-            if config.get("WIDTH", 0) < 21 or config.get("HEIGHT", 0) < 13:
-                config_error("PATTERN 1337 requires WIDTH >= 21 and "
-                             "HEIGHT >= 13.")
-        if number != 42 and number != 1337:
-            config[key] = 42
-        else:
-            config[key] = number
+        # if number == 1337:
+        #     if config.get("WIDTH", 0) < 21 or config.get("HEIGHT", 0) < 13:
+        #         config_error("PATTERN 1337 requires WIDTH >= 21 and "
+        #                      "HEIGHT >= 13.")
+        # if number != 42 and number != 1337:
+        #     config[key] = 42
+        # else:
 
 
 def parse_config(config_path="config.txt"):
