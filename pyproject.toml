@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mazegen"
+version = "1.0.0"
+description = "Reusable maze generation library"
+authors = [
+  { name="Yassine Elgoumri", email="proowork15@gmail.com"},
+  { name="Ayoub Fadli"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.setuptools]
+packages = ["mazegen"]

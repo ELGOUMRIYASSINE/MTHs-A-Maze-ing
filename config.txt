@@ -1,18 +1,11 @@
-<<<<<<< HEAD
-WIDTH=10
-HEIGHT=10
-ENTRY=0,1
-EXIT=9,9
-=======
-width=21
-height=13
+width=22
+height=22
 # x,y
 entry=0,0
 # x,y
-EXIT=12,12
->>>>>>> 14c7abe8a602cd7dd05d9e56c64ed2e69e9076e6
+EXIT=9,9
 OUTPUT_FILE=maze_output
-PERFECT=False
+PERFECT=True
 SEED=0
 # 42 or 1337 if you enter somthing else 42 will be by default
 PATTERN=1337

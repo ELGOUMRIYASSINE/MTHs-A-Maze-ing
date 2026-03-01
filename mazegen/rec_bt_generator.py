@@ -3,10 +3,12 @@ import sys
 from .MazeGenerator import MazeGenerator
 
 sys.setrecursionlimit(10000)
+
+
 class RecBTGenerator(MazeGenerator):
     def kill(self, pos):
         self.grid[pos[0]][pos[1]].visited = True
-        
+
         dim = ["top", "bottom", "left", "right"]
         tmp_roots = dim.copy()
 
@@ -39,6 +41,6 @@ class RecBTGenerator(MazeGenerator):
                 break
         self.grid[start[0]][start[1]].visited = True
         self.kill(start)
-        if self.perfect == False:
+        if self.perfect is False:
             self.make_inperfect()
         self.update()

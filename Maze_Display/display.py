@@ -227,9 +227,9 @@ def render_frame(matrix, theme_idx=0, show_path=False):
     sys.stdout.write("\033[H")
 
     theme = THEMS[theme_idx]
-    wall_color = f"{theme["wall"]} {RESET}"
-    solid_color = f"{theme["solid"]} {RESET}"
-    space_color = f"{theme["space"]} {RESET}"
+    wall_color = f"{theme['wall']} {RESET}"
+    solid_color = f"{theme['solid']} {RESET}"
+    space_color = f"{theme['space']} {RESET}"
 
     out = ""
     for r_idx, row in enumerate(matrix):

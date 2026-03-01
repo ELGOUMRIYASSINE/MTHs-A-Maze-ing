@@ -1,7 +1,7 @@
-import parse as parser
 import random as rand
 from .MazeGenerator import MazeGenerator
 import sys
+
 
 class KillHuntGenerator(MazeGenerator):
     def kill(self, pos):
@@ -24,25 +24,42 @@ class KillHuntGenerator(MazeGenerator):
                 return pos
 
     def hunt(self):
-        H = parser.config['HEIGHT'] - 1
-        W = parser.config['WIDTH'] - 1
+        H = self.HEIGHT - 1
+        W = self.WIDTH - 1
 
-        for y in range(parser.config['HEIGHT']):
-            for x in range(parser.config['WIDTH']):
-                if self.grid[y][x].visited is False and not self.grid[y][x].blocked:
-                    if y > 0 and self.grid[y - 1][x].visited is True and not self.grid[y - 1][x].blocked:
+        for y in range(self.HEIGHT):
+            for x in range(self.WIDTH):
+                if self.grid[y][x].visited is False \
+                   and not self.grid[y][x].blocked:
+                    if (
+                        y > 0
+                        and self.grid[y - 1][x].visited is True
+                        and not self.grid[y - 1][x].blocked
+                    ):
                         self.grid[y][x].top = 0
                         self.grid[y - 1][x].bottom = 0
                         return [y, x]
-                    if y < H and self.grid[y + 1][x].visited is True and not self.grid[y + 1][x].blocked:
+                    if (
+                        y < H
+                        and self.grid[y + 1][x].visited is True
+                        and not self.grid[y + 1][x].blocked
+                    ):
                         self.grid[y][x].bottom = 0
                         self.grid[y + 1][x].top = 0
                         return [y, x]
-                    if x < W and self.grid[y][x + 1].visited is True and not self.grid[y][x + 1].blocked:
+                    if (
+                        x < W
+                        and self.grid[y][x + 1].visited is True
+                        and not self.grid[y][x + 1].blocked
+                    ):
                         self.grid[y][x].right = 0
                         self.grid[y][x + 1].left = 0
                         return [y, x]
-                    if x > 0 and self.grid[y][x - 1].visited is True and not self.grid[y][x - 1].blocked:
+                    if (
+                        x > 0
+                        and self.grid[y][x - 1].visited is True
+                        and not self.grid[y][x - 1].blocked
+                    ):
                         self.grid[y][x].left = 0
                         self.grid[y][x - 1].right = 0
                         return [y, x]
@@ -58,11 +75,9 @@ class KillHuntGenerator(MazeGenerator):
         self.grid = []
         self.generate_grid()
         self.add_42()
-        H = parser.config['HEIGHT'] - 1
-        W = parser.config['WIDTH'] - 1
-        # pick a number that is not in 42
+        H = self.HEIGHT - 1
+        W = self.WIDTH - 1
         while True:
-            # randint YG """ get random integer within range of numbers """ YG
             start = [rand.randint(0, H), rand.randint(0, W)]
             if not self.grid[start[0]][start[1]].blocked:
                 break
@@ -76,5 +91,5 @@ class KillHuntGenerator(MazeGenerator):
                 self.update()
                 break
             self.grid[start[0]][start[1]].visited = True
-        if self.perfect == False:
+        if self.perfect is False:
             self.make_inperfect()
