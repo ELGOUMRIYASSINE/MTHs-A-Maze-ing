@@ -1,27 +1,37 @@
 import math
 
-config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT', 'OUTPUT_FILE', 'PERFECT', 'SEED']
+config_keys = ['WIDTH', 'HEIGHT', 'ENTRY', 'EXIT',
+               'OUTPUT_FILE', 'PERFECT', 'SEED']
 config = {}
+
+
+def config_error(message):
+    raise ValueError(message)
 
 
 def check_path():
     width = config['WIDTH']
     height = config['HEIGHT']
-    if not 'PATTERN' in config:
+
+    if 'PATTERN' not in config:
         config['PATTERN'] = 42
+
     x, y = config['ENTRY']
     x2, y2 = config['EXIT']
 
-    # here I'm checking if entry and exit in the same point
+    # ENTRY and EXIT cannot be the same
     if x == x2 and y == y2:
-        raise ValueError("Entry or Exit Problem")
-    # I'm checking if entry and exit in the grid
-    if not (0 <= x <= width - 1 and 0 <= y <= height - 1):
-        raise ValueError("ENTRY not on the maze")
-    if not (0 <= x2 <= width - 1 and 0 <= y2 <= height - 1):
-        raise ValueError("EXIT not on the maze")
+        config_error("ENTRY and EXIT cannot be the same position.")
 
-    # I'm checking if entry and exit in 42 or 1337
+    # ENTRY inside maze boundaries
+    if not (0 <= x < width and 0 <= y < height):
+        config_error("ENTRY position is outside the maze boundaries.")
+
+    # EXIT inside maze boundaries
+    if not (0 <= x2 < width and 0 <= y2 < height):
+        config_error("EXIT position is outside the maze boundaries.")
+
+    # Patterns
     pattern_42 = [
         [1, 0, 1, 0, 1, 1, 1],
         [1, 0, 1, 0, 0, 0, 1],
@@ -38,135 +48,187 @@ def check_path():
         [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
         [0,0,1,0,1,1,1,1,0,1,1,1,1,0,0,0,0,0,1],
     ]
-    if config['PATTERN'] == 42:
-        pattern = pattern_42
-    else:
-        pattern = pattern_1337
-    area_h, area_w = len(pattern), len(pattern[0])
-    start_y = math.floor((config['HEIGHT'] - area_h) / 2)
-    start_x = math.floor((config['WIDTH'] - area_w) / 2)
+
+    pattern = pattern_42 if config['PATTERN'] == 42 else pattern_1337
+
+    area_h = len(pattern)
+    area_w = len(pattern[0])
+
+    start_y = math.floor((height - area_h) / 2)
+    start_x = math.floor((width - area_w) / 2)
 
     for p_y in range(area_h):
         for p_x in range(area_w):
             if pattern[p_y][p_x] == 1:
                 if start_y + p_y == y and start_x + p_x == x:
-                    raise ValueError("ENTRY must be outside 42")
+                    config_error("ENTRY cannot be placed inside the pattern area.")
                 if start_y + p_y == y2 and start_x + p_x == x2:
-                    raise ValueError("ENTRY must be outside 42")
+                    config_error("EXIT cannot be placed inside the pattern area.")
 
 
 def value_valid(key, value):
+    if key.islower():
+        key = key.upper()
     if key in ['WIDTH', 'HEIGHT']:
-        value = int(value)
-        if key == 'WIDTH' and (value < 9 or value > 100):
-            return ValueError("Invalid value for key:", key)
-        if key == 'HEIGHT' and (value < 7 or value > 100):
-            raise ValueError("Invalid value for key:", key)
-        config[key] = value
-    if key in ['ENTRY', 'EXIT']:
-        value = value.split(",")
-        if len(value) != 2:
-            return False
-        config[key] = (int(value[0]), int(value[1]))
-    if key == 'OUTPUT_FILE':
-        if not value:
-            raise ValueError("No Outputfile Provided")
         try:
-            open(value, 'w')
-        except PermissionError:
-            raise PermissionError("Check Output file permissions ! cant write")
+            value = int(value)
         except ValueError:
-            raise ValueError("Invalide Output file Value")
+            config_error(f"{key} must be a valid integer number.")
+
+        if key == 'WIDTH' and not (9 <= value <= 100):
+            config_error("WIDTH must be between 9 and 100.")
+
+        if key == 'HEIGHT' and not (7 <= value <= 100):
+            config_error("HEIGHT must be between 7 and 100.")
+
+        config[key] = value
+
+    elif key in ['ENTRY', 'EXIT']:
+        parts = value.split(",")
+        if len(parts) != 2:
+            config_error(f"{key} must be in format: x,y (example: 3,5)")
+
+        try:
+            config[key] = (int(parts[0]), int(parts[1]))
+        except ValueError:
+            config_error(f"{key} coordinates must be integers.")
+
+    elif key == 'OUTPUT_FILE':
+        if not value:
+            config_error("OUTPUT_FILE is missing or empty.")
+
+        try:
+            with open(value, 'w'):
+                pass
+        except PermissionError:
+            config_error("Cannot write to OUTPUT_FILE. Please check permissions.")
         except IsADirectoryError:
-            raise IsADirectoryError("Output file given is a directory")
+            config_error("OUTPUT_FILE cannot be a directory.")
         except Exception:
-            raise Exception("Somthing Went Wrong With Output File Key")
-    if key == 'PERFECT':
-        if (value == 'True'):
-            value = True
-        elif (value == 'False'):
-            value = False
-        else:
-            raise ValueError("Invalid value for key:", key)
+            config_error("Unexpected error while processing OUTPUT_FILE.")
+
         config[key] = value
-    if key == 'SEED':
-        value = int(value)
-        if not isinstance(value, int):
-            raise ValueError("Invalid value for key:", key)
-        config[key] = value
-    if key == 'PATTERN':
-        number = int(value)
-        if number == 42 or number == 1337:
-            config[key] = number
+
+    elif key == 'PERFECT':
+        if value == 'True':
+            config[key] = True
+        elif value == 'False':
+            config[key] = False
         else:
+            config_error("PERFECT must be either True or False.")
+
+    elif key == 'SEED':
+        try:
+            config[key] = int(value)
+        except ValueError:
+            config_error("SEED must be a valid integer number.")
+
+    elif key == 'PATTERN':
+        try:
+            number = int(value)
+        except ValueError:
+            config_error("PATTERN must be either 42 or 1337.")
+
+        # if number not in [42, 1337]:
+        #     config_error("PATTERN must be either 42 or 1337.")
+
+        if number == 1337:
+            if config.get('WIDTH', 0) < 21 or config.get('HEIGHT', 0) < 13:
+                config_error("PATTERN 1337 requires WIDTH >= 21 and HEIGHT >= 13.")
+        if number != 42 and number != 1337:
             config[key] = 42
+        else:
+            config[key] = number
 
 
 def parse_config(config_path="config.txt"):
     try:
         with open(config_path, 'r') as config_file:
-            try:
-                for line in config_file:
-                    if (line[0] == '#' or line.strip() == ''):
-                        continue
-                    data = line.split("=")
-                    # if (len(data) != 2 or not data[0] in config_keys):
-                    if (len(data) != 2):
-                        raise ValueError("Invalid config format")
-                    config[data[0]] = data[1].split("#")[0].rstrip('\n')
-                for key in config_keys:
-                    if key not in config:
-                        raise ValueError(f"Missing {key} in config file")
-                for key, value in config.items():
-                    value_valid(key, value)
-                check_path()
-            except Exception as e:
-                print(e)
-                exit()
+            for line in config_file:
+                line = line.strip()
+
+                if not line or line.startswith('#'):
+                    continue
+
+                if '=' not in line:
+                    config_error("Invalid config line format. Expected: KEY=VALUE")
+
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.split("#")[0].strip()
+
+                config[key] = value
+
+        # Check required keys
+        for key in config_keys:
+            if key not in config and not key.upper() in config_keys:
+                config_error(f"Missing required key: {key}")
+
+        # Validate values
+        for key in list(config.keys()):
+            value_valid(key, config[key])
+
+        check_path()
+
         config['CONFIG_FILE'] = config_path
+
+    except FileNotFoundError:
+        config_error("Config file not found.")
     except PermissionError:
-        raise PermissionError("Check Config File permissions ! Cant Write")
-    except ValueError:
-        raise ValueError("Invalide Config file Value")
+        config_error("Cannot access config file. Please check permissions.")
     except IsADirectoryError:
-        raise IsADirectoryError("Config file Given Is A Directory")
+        config_error("The config path points to a directory, not a file.")
+    except ValueError as e:
+        print(f"Configuration Error: {e}")
+        exit(1)
     except Exception:
-        raise Exception("Somthing Went Wrong With Config file Key")
+        config_error("Unexpected error while reading config file.")
+
 
 def parse_maze_output(filename):
     matrix = []
     meta = {}
+
     try:
         with open(filename, 'r') as file:
             lines = [l.strip() for l in file.readlines()]
             i = 0
 
-            # Parse Maze grids
+            # Parse maze grid
             while i < len(lines) and lines[i]:
                 row = []
                 for c in lines[i]:
-                    value = int(c, 16)
+                    try:
+                        value = int(c, 16)
+                    except ValueError:
+                        config_error("Maze file contains invalid hexadecimal characters.")
+
                     value = format(value, "04b")
                     bits = [int(x) for x in value]
                     row.append(bits)
+
                 matrix.append(row)
                 i += 1
 
-            # Skip potential empty lines
+            # Skip empty lines
             while i < len(lines) and not lines[i]:
                 i += 1
 
             # Parse metadata
             if i + 2 < len(lines):
-                # Convert coords to integers immediately here for safety
-                meta['entry'] = tuple(map(int, lines[i].split(',')))
-                meta['exit'] = tuple(map(int, lines[i+1].split(',')))
-                meta['path'] = lines[i+2]
+                try:
+                    meta['entry'] = tuple(map(int, lines[i].split(',')))
+                    meta['exit'] = tuple(map(int, lines[i+1].split(',')))
+                    meta['path'] = lines[i+2]
+                except ValueError:
+                    config_error("Invalid metadata format in maze file.")
 
     except FileNotFoundError:
-        print("Error: File not found")
+        print("Maze output file not found.")
         return [], {}
+
     return matrix, meta
+
 
 if __name__ == "__main__":
     parse_config()

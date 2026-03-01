@@ -1,7 +1,10 @@
 import parse as parser
-from maze_logic.kill_hunt_generator import KillHuntGenerator
-from maze_logic.rec_bt_generator import RecBTGenerator
-from maze_logic import maze_solver
+# from maze_logic.algo_generators.kill_hunt_generator import KillHuntGenerator
+# from maze_logic.algo_generators.rec_bt_generator import RecBTGenerator
+# from maze_logic.algo_generators import maze_solver
+from algo_generators.kill_hunt_generator import KillHuntGenerator
+from algo_generators.rec_bt_generator import RecBTGenerator
+from algo_generators import maze_solver
 from Maze_Display import display
 import sys
 import os
@@ -78,8 +81,20 @@ if __name__ == "__main__":
 
         match choice:
             case "1":
+<<<<<<< HEAD
                 checker() # Re-parse config if you need fresh width/height
                 generate_current_maze()
+=======
+                # checker()
+                if gen_algo:
+                    maze.generate()
+                    path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
+                    maze.update(path_string)
+                else:
+                    maze2.generate()
+                    path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
+                    maze2.update(path_string)
+>>>>>>> 14c7abe8a602cd7dd05d9e56c64ed2e69e9076e6
             case "2":
                 show_path = not show_path
             case "3":
