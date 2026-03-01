@@ -1,9 +1,11 @@
-WIDTH=50
-HEIGHT=30
-ENTRY=0,0
-EXIT=29,29
+width=21
+height=13
+# x,y
+entry=0,0
+# x,y
+EXIT=12,12
 OUTPUT_FILE=maze_output
 PERFECT=False
 SEED=0
 # 42 or 1337 if you enter somthing else 42 will be by default
-PATTERN=111
+PATTERN=1337

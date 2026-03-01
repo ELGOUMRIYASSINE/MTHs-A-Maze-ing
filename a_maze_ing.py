@@ -1,7 +1,10 @@
 import parse as parser
-from maze_logic.kill_hunt_generator import KillHuntGenerator
-from maze_logic.rec_bt_generator import RecBTGenerator
-from maze_logic import maze_solver
+# from maze_logic.algo_generators.kill_hunt_generator import KillHuntGenerator
+# from maze_logic.algo_generators.rec_bt_generator import RecBTGenerator
+# from maze_logic.algo_generators import maze_solver
+from algo_generators.kill_hunt_generator import KillHuntGenerator
+from algo_generators.rec_bt_generator import RecBTGenerator
+from algo_generators import maze_solver
 from Maze_Display import display
 # from maze_logic.Cell import Cell
 import sys
@@ -55,7 +58,7 @@ if __name__ == "__main__":
 
         match choice:
             case "1":
-                checker()
+                # checker()
                 if gen_algo:
                     maze.generate()
                     path_string, path_coords = maze_solver.solve_maze_bfs(parser.config['OUTPUT_FILE'])
