@@ -22,9 +22,11 @@ class RecBTGenerator(MazeGenerator):
 
     def generate(self):
         if self.first_generation:
+            self.walk_history = []
             rand.seed(self.seed)
             self.first_generation = False
         else:
+            self.walk_history = []
             self.seed = rand.randint(-sys.maxsize, sys.maxsize)
             rand.seed(self.seed)
         self.grid = []

@@ -52,6 +52,20 @@ class MazeGenerator(ABC):
             if path_string:
                 f.write(path_string)
 
+    def reload_config(self, config):
+        self.HEIGHT = config["HEIGHT"]
+        self.WIDTH = config["WIDTH"]
+        self.entry = config["ENTRY"]
+        self.exit = config["EXIT"]
+        self.first_generation = True
+        self.seed = config["SEED"]
+        self.perfect = config["PERFECT"]
+        self.output_file = config["OUTPUT_FILE"]
+        if config["PATTERN"]:
+            self.pattern = config["PATTERN"]
+        else:
+            self.pattern = 42
+
     def make_inperfect(self):
         walls_to_break = int(self.HEIGHT * self.WIDTH * 0.03)
 
@@ -184,12 +198,12 @@ class MazeGenerator(ABC):
         ]
 
         pattern_1337 = [
-            [0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
-            [0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
-            [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-            [0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+            [0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1],
+            [0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0],
+            [0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0],
+            [0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0],
+            [1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0],
         ]
 
         pattern = pattern_42
@@ -198,7 +212,7 @@ class MazeGenerator(ABC):
 
         if not (self.WIDTH > len(pattern[0]) + 1 and self.HEIGHT > len(pattern) + 1):
             return
-       
+
         area_h, area_w = len(pattern), len(pattern[0])
         start_y = math.floor((self.HEIGHT - area_h) / 2)
         start_x = math.floor((self.WIDTH - area_w) / 2)
