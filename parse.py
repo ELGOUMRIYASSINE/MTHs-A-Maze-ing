@@ -1,17 +1,41 @@
+"""Configuration parsing and maze output parsing utilities.
+
+This module provides helpers to parse the project's `config.txt` and
+to read maze files produced by the generators.
+"""
+
 import math
+from typing import Any, Dict, List, Tuple, NoReturn
 
-config_keys = ["WIDTH", "HEIGHT", "ENTRY", "EXIT",
-               "OUTPUT_FILE", "PERFECT", "SEED"]
-config = {}
+# Type aliases
+Matrix = List[List[List[int]]]
+Meta = Dict[str, Any]
 
 
-def config_error(message):
+config_keys: List[str] = [
+    "WIDTH",
+    "HEIGHT",
+    "ENTRY",
+    "EXIT",
+    "OUTPUT_FILE",
+    "PERFECT",
+]
+# Module-level configuration dictionary populated by `parse_config()`.
+config: Dict[str, Any] = {}
+
+
+def config_error(message: str) -> NoReturn:
+    """Raise a configuration `ValueError` with `message`."""
     raise ValueError(message)
 
 
-def check_path():
-    width = config["WIDTH"]
-    height = config["HEIGHT"]
+def check_path() -> None:
+    """Validate `ENTRY`/`EXIT` positions and pattern placement.
+
+    Uses and may update the module-level `config` mapping.
+    """
+    width: int = config["WIDTH"]
+    height: int = config["HEIGHT"]
 
     if "PATTERN" not in config:
         config["PATTERN"] = 42
@@ -62,37 +86,40 @@ def check_path():
     start_y = math.floor((height - area_h) / 2)
     start_x = math.floor((width - area_w) / 2)
 
-
     for p_y in range(area_h):
         for p_x in range(area_w):
             if pattern[p_y][p_x] == 0:
                 continue
             if start_y + p_y == y and start_x + p_x == x:
-                config_error("ENTRY cannot be placed inside"
-                                "the pattern area.")
+                config_error("ENTRY cannot be placed inside the pattern area.")
             if start_y + p_y == y2 and start_x + p_x == x2:
-                config_error("EXIT cannot be placed inside the "
-                                "pattern area.")
+                config_error("EXIT cannot be placed inside the pattern area.")
 
 
-def value_valid(key, value):
+def value_valid(key: str, value: str) -> None:
+    """Validate and normalize a single configuration `key`/`value` pair.
+
+    On success the normalized value is stored in the module-level
+    `config` mapping.
+    """
     if key.islower():
         key = key.upper()
-    if key in ["WIDTH", "HEIGHT"]:
+
+    if key in ("WIDTH", "HEIGHT"):
         try:
-            value = int(value)
+            ivalue = int(value)
         except ValueError:
             config_error(f"{key} must be a valid integer number.")
 
-        if key == "WIDTH" and not (3 <= value <= 55):
+        if key == "WIDTH" and not (3 <= ivalue <= 55):
             config_error("WIDTH must be between 3 and 55.")
 
-        if key == "HEIGHT" and not (3 <= value <= 55):
+        if key == "HEIGHT" and not (3 <= ivalue <= 55):
             config_error("HEIGHT must be between 3 and 55.")
 
-        config[key] = value
+        config[key] = ivalue
 
-    elif key in ["ENTRY", "EXIT"]:
+    elif key in ("ENTRY", "EXIT"):
         parts = value.split(",")
         if len(parts) != 2:
             config_error(f"{key} must be in format: x,y (example: 3,5)")
@@ -110,8 +137,9 @@ def value_valid(key, value):
             with open(value, "w"):
                 pass
         except PermissionError:
-            config_error("Cannot write to OUTPUT_FILE. Please "
-                         "check permissions.")
+            config_error(
+                "Cannot write to OUTPUT_FILE. Please check permissions."
+            )
         except IsADirectoryError:
             config_error("OUTPUT_FILE cannot be a directory.")
         except Exception:
@@ -140,20 +168,15 @@ def value_valid(key, value):
             config_error("PATTERN must be either 42 or 1337.")
 
         config[key] = number
-        # if number not in [42, 1337]:
-        #     config_error("PATTERN must be either 42 or 1337.")
-
-        # if number == 1337:
-        #     if config.get("WIDTH", 0) < 21 or config.get("HEIGHT", 0) < 13:
-        #         config_error("PATTERN 1337 requires WIDTH >= 21 and "
-        #                      "HEIGHT >= 13.")
-        # if number != 42 and number != 1337:
-        #     config[key] = 42
-        # else:
 
 
-def parse_config(config_path="config.txt"):
-    config = {}
+def parse_config(config_path: str = "config.txt") -> Dict[str, Any]:
+    """Parse `config_path` and return normalized configuration mapping.
+
+    The returned mapping is also stored in the module-level `config`
+    variable.
+    """
+    raw_config: Dict[str, str] = {}
     try:
         with open(config_path, "r") as config_file:
             for line in config_file:
@@ -163,27 +186,30 @@ def parse_config(config_path="config.txt"):
                     continue
 
                 if "=" not in line:
-                    config_error("Invalid config line format. Expected: "
-                                 "KEY=VALUE")
+                    config_error(
+                        "Invalid config line format. Expected: KEY=VALUE"
+                    )
 
                 key, value = line.split("=", 1)
                 key = key.strip()
+                key = key.upper()
                 value = value.split("#")[0].strip()
 
-                config[key] = value
+                raw_config[key] = value
 
         # Check required keys
         for key in config_keys:
-            if key not in config and not key.upper() in config_keys:
+            if key not in raw_config:
                 config_error(f"Missing required key: {key}")
 
-        # Validate values
-        for key in list(config.keys()):
-            value_valid(key, config[key])
+        # Validate values (writes normalized values into module-level `config`)
+        for key in list(raw_config.keys()):
+            value_valid(key, raw_config[key])
 
         check_path()
 
         config["CONFIG_FILE"] = config_path
+        return config
 
     except FileNotFoundError:
         config_error("Config file not found.")
@@ -192,15 +218,20 @@ def parse_config(config_path="config.txt"):
     except IsADirectoryError:
         config_error("The config path points to a directory, not a file.")
     except ValueError as e:
-        print(f"Configuration Error: {e}")
-        exit(1)
-    except Exception:
-        config_error("Unexpected error while reading config file.")
+        raise ValueError(f"Configuration Error: {e}")
+    except Exception as e:
+        raise Exception(e)
 
 
-def parse_maze_output(filename):
-    matrix = []
-    meta = {}
+def parse_maze_output(filename: str) -> Tuple[Matrix, Meta]:
+    """Parse a maze output file produced by the generators.
+
+    Returns a tuple `(matrix, meta)` where `matrix` is a 2D list of
+    cell bit-lists and `meta` contains optional `entry`, `exit`, and
+    `path` information extracted from the file.
+    """
+    matrix: List[List[List[int]]] = []
+    meta: Dict[str, Any] = {}
 
     try:
         with open(filename, "r") as file:
@@ -212,15 +243,15 @@ def parse_maze_output(filename):
                 row = []
                 for c in lines[i]:
                     try:
-                        value = int(c, 16)
+                        num = int(c, 16)
                     except ValueError:
                         config_error(
-                            "Maze file contains invalid hexadecimal "
-                            "characters."
+                            "Maze file contains invalid hexadecimal"
+                            " characters."
                         )
 
-                    value = format(value, "04b")
-                    bits = [int(x) for x in value]
+                    bin_str = format(num, "04b")
+                    bits = [int(x) for x in bin_str]
                     row.append(bits)
 
                 matrix.append(row)

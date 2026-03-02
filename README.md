@@ -1,201 +1,143 @@
-# 🧩 Maze Algorithms
+# MTH's A-MAZE-ING
 
-A Python package providing multiple maze generation algorithms and a BFS maze solver.
+Terminal maze generator and solver project with interactive visualization.
 
-This package allows you to:
+## What this project does
 
-- Generate mazes using different algorithms
-- Solve mazes using Breadth-First Search (BFS)
-- Render mazes in terminal
-- Switch between algorithms dynamically
-- Visualize walk history
-- Toggle path display
+- Generates mazes with two algorithms:
+    - Recursive Backtracking
+    - Hunt-and-Kill
+- Solves the generated maze with BFS (shortest path).
+- Renders the maze in terminal with theme switching and optional animation.
+- Plays background music/effects through `pygame`.
 
----
+## Project layout
 
-## 🚀 Installation
+- `a_maze_ing.py`: main interactive CLI application.
+- `parse.py`: config parsing and validation.
+- `mazegen/`: reusable generation package.
+- `Path_finder/maze_solver.py`: BFS solver.
+- `Maze_Display/display.py`: terminal rendering and animation.
+- `config.txt`: default runtime config.
+- `requirements.txt`: runtime dependencies.
 
-If installing locally:
+Detailed package docs are in `mazegen/README.md`.
+
+## Requirements
+
+- Python 3.9+
+- `pip`
+- Terminal that supports ANSI colors and Unicode
+- Audio support for `pygame.mixer` (optional, can be toggled in app)
+
+## Dependencies
+
+Runtime:
+
+- `pygame` (listed in `requirements.txt`)
+
+Install dependencies from repository root:
 
 ```bash
+python3 -m pip install -r requirements.txt
+```
 
-pip install .
+Optional (for lint/type checks used in this repo):
 
-If published on PyPI:
+```bash
+python3 -m pip install mypy flake8
+```
 
-pip install maze-algorithms
-📦 Available Algorithms
+Optional editable install of local package:
 
-Currently implemented:
+```bash
+python3 -m pip install -e .
+```
 
-Recursive Backtracking (DFS-based)
+## Configuration
 
-Kill & Hunt Algorithm
+By default the app reads `config.txt`. You can also pass a custom file path.
 
-🧠 How It Works
+Required keys in config file:
 
-Each generator:
+- `WIDTH`
+- `HEIGHT`
+- `ENTRY`
+- `EXIT`
+- `OUTPUT_FILE`
+- `PERFECT`
 
-Takes a configuration dictionary
+Optional key:
 
-Generates a maze
-
-Writes output to a file
-
-Can update the maze with a solution path
-
-Stores walk history
-
-⚙️ Configuration
-
-The package expects a configuration dictionary like:
-
-config = {
-    "WIDTH": 20,
-    "HEIGHT": 20,
-    "OUTPUT_FILE": "maze.txt"
-}
-
-You can load configuration using your parse_config() function.
-
-🧪 Basic Usage Example
-1️⃣ Generate Maze Using Recursive Backtracking
-from maze_algorithms.algo_generators.rec_bt_generator import RecBTGenerator
-
-config = {
-    "WIDTH": 20,
-    "HEIGHT": 20,
-    "OUTPUT_FILE": "maze.txt"
-}
-
-maze = RecBTGenerator(config)
-maze.generate()
-2️⃣ Generate Maze Using Kill & Hunt
-from maze_algorithms.algo_generators.kill_hunt_generator import KillHuntGenerator
-
-maze = KillHuntGenerator(config)
-maze.generate()
-3️⃣ Solve Maze Using BFS
-from maze_algorithms.algo_generators import maze_solver
-
-path_string, path_coords = maze_solver.solve_maze_bfs("maze.txt")
-4️⃣ Update Maze With Solution Path
-maze.update(path_string)
-5️⃣ Get Walk History
-history = maze.get_walk_history()
-print(history)
-🖥️ Interactive Mode Example
-
-If using your CLI application:
-
-python main.py config.txt
-
-Menu options:
-
-Re-generate maze
-
-Show/Hide solution path
-
-Rotate color theme
-
-Switch generation algorithm
-
-Quit
-
-🧮 Algorithms Explanation
-Recursive Backtracking
-
-Depth-First Search based algorithm:
-
-Start from random cell
-
-Mark visited
-
-Randomly visit unvisited neighbors
-
-Backtrack when stuck
-
-Produces perfect mazes (no cycles).
-
-Kill & Hunt
-
-Two-phase algorithm:
-
-Kill phase: Random walk until dead end
-
-Hunt phase: Scan grid to find new unvisited cell
-
-Produces organic-looking mazes.
-
-BFS Solver
-
-Breadth-First Search guarantees shortest path.
-
-Steps:
-
-Start from entry
-
-Explore neighbors level by level
-
-Stop when exit found
-
-Reconstruct path
-
-Time Complexity: O(V + E)
-
-📁 Project Structure
-maze_algorithms/
-│
-├── algo_generators/
-│   ├── rec_bt_generator.py
-│   ├── kill_hunt_generator.py
-│   └── maze_solver.py
-│
-├── display.py
-└── __init__.py
-🧑‍💻 Requirements
-
-Python 3.8+
-
-No external dependencies
-
-🔮 Future Improvements
-
-Add Prim's Algorithm
-
-Add Kruskal's Algorithm
-
-Add A* Solver
-
-Add GUI (Pygame or Tkinter)
-
-Publish to PyPI
-
-📜 License
-
-MIT License
-
-👨‍💻 Author
-
-Yassine Elgoumri
-Full Stack & Backend Developer
-
-
----
-
-# 🧠 Now Let Me Improve You (Professional Level Advice)
-
-To make your package look **serious and publishable**, I recommend:
-
-### ✅ Add:
-
-- Docstrings to every class and method
-- Type hints
-- `__all__` inside `__init__.py`
-- Version number in `__init__.py`
-- Proper CLI entry point
+- `PATTERN` (recommended values: `42` or `1337`)
+- `SEED`
 
 Example:
 
-```python
-__version__ = "0.1.0"
+```ini
+WIDTH=20
+HEIGHT=20
+ENTRY=0,0
+EXIT=19,19
+OUTPUT_FILE=maze_output
+PERFECT=True
+SEED=1
+PATTERN=42
+```
+
+## Run the project
+
+From repository root:
+
+```bash
+python3 a_maze_ing.py
+```
+
+Use a custom config file:
+
+```bash
+python3 a_maze_ing.py path/to/config.txt
+```
+
+The app opens an interactive menu where you can:
+
+- regenerate a maze,
+- show/hide solution path,
+- rotate themes,
+- switch generation algorithm,
+- toggle path animation,
+- reload config,
+- toggle sound.
+
+## Notes about audio files
+
+The CLI expects these assets to exist:
+
+- `sounds/background_theme.mp3`
+- `sounds/meow.mp3`
+
+If audio causes issues in your environment, disable sound from the in-app menu.
+
+## Development commands
+
+Using `makefile` targets:
+
+```bash
+make run
+make lint
+make clean
+```
+
+Equivalent direct commands:
+
+```bash
+python3 -m flake8 .
+python3 -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+```
+
+## Troubleshooting
+
+- `Config file not found`: run from repository root or pass config path explicitly.
+- `Configuration Error`: verify required keys and value formats in config file.
+- No sound / mixer errors: ensure system audio backend is available, or turn sound off.
+- Display glitches: use a terminal with ANSI + Unicode support.

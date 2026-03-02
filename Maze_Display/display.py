@@ -1,7 +1,14 @@
+from collections import deque
+from collections.abc import Mapping, Sequence
+from typing import Any
 import unicodedata
 import time
 import sys
-import pygame
+import os
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
+
 # ANSI Colors
 RESET = "\033[0m"
 WHITE_BG = "\033[47m"
@@ -12,6 +19,12 @@ GREEN_BG = "\033[42m"
 YELLOW_BG = "\033[43m"
 CYAN_BG = "\033[46m"
 CHAR_WATER = f"{CYAN_BG} {RESET}"
+
+Cell = list[int]
+MazeMatrix = list[list[Cell]]
+Position = tuple[int, int]
+Meta = dict[str, Position]
+AnimationStep = tuple[int, int, str]
 
 THEMS = [
     # Classic
@@ -28,16 +41,18 @@ SPACE = " "
 TOM = "🐱"   # Entry
 JERRY = "🐭"  # Exit
 
-def setup_solid_matrix(animation_data):
+
+def setup_solid_matrix(animation_data: Sequence[AnimationStep]) -> MazeMatrix:
     max_row = max(step[0] for step in animation_data)
-    max_col = max(step[1] for step in animation_data )
+    max_col = max(step[1] for step in animation_data)
 
     width = max_col + 1
     height = max_row + 1
 
-    return ([[[1,1,1,1] for _ in range(width)] for _ in range(height)])
+    return [[[1, 1, 1, 1] for _ in range(width)] for _ in range(height)]
 
-def break_wall(grid, r, c, direction):
+
+def break_wall(grid: MazeMatrix, r: int, c: int, direction: str) -> None:
     if direction == 'l':
         grid[r][c][0] = 0
     elif direction == 'b':
@@ -46,6 +61,7 @@ def break_wall(grid, r, c, direction):
         grid[r][c][2] = 0
     elif direction == 't':
         grid[r][c][3] = 0
+
 
 def _display_width(text: str) -> int:
     width = 0
@@ -68,16 +84,19 @@ def _fit_cell(text: str, cell_width: int = 3) -> str:
         return text + (SPACE * (cell_width - w))
     return " ? "[:cell_width]
 
-from collections import deque
 
-def get_water_history(matrix, start_pos, exit_pos):
+def get_water_history(
+    matrix: MazeMatrix,
+    start_pos: Position,
+    exit_pos: Position,
+) -> list[Position]:
     """Runs BFS and returns the exact order cells were explored"""
     queue = deque([start_pos])
     visited = set([start_pos])
     history = []  # This is our video timeline!
 
     while queue:
-        c, r = queue.popleft() # c is X (col), r is Y (row)
+        c, r = queue.popleft()  # c is X (col), r is Y (row)
         history.append((c, r))
 
         if (c, r) == exit_pos:
@@ -87,10 +106,14 @@ def get_water_history(matrix, start_pos, exit_pos):
 
         # Check all 4 directions (0 means no wall)
         neighbors = []
-        if not west: neighbors.append((c - 1, r))
-        if not south: neighbors.append((c, r + 1))
-        if not east: neighbors.append((c + 1, r))
-        if not north: neighbors.append((c, r - 1))
+        if not west:
+            neighbors.append((c - 1, r))
+        if not south:
+            neighbors.append((c, r + 1))
+        if not east:
+            neighbors.append((c + 1, r))
+        if not north:
+            neighbors.append((c, r - 1))
 
         for nc, nr in neighbors:
             # Ensure we stay inside the grid
@@ -101,21 +124,21 @@ def get_water_history(matrix, start_pos, exit_pos):
 
     return history
 
-def parse_maze_output(filename):
-    global matrix, meta
-    matrix = []
-    meta = {}
+
+def parse_maze_output(filename: str) -> tuple[MazeMatrix, Meta]:
+    matrix: MazeMatrix = []
+    meta: Meta = {}
     try:
-        with open(filename, 'r') as file:
-            lines = [line.strip() for line in file.readlines()]
+        with open(filename, 'r', encoding='utf-8') as file:
+            lines = [line.strip() for line in file]
             i = 0
 
             while i < len(lines) and lines[i]:
                 row = []
                 for c in lines[i]:
-                    value = int(c, 16)
-                    value = format(value, "04b")
-                    bits = [int(x) for x in value]
+                    int_value = int(c, 16)
+                    bit_string = format(int_value, "04b")
+                    bits = [int(x) for x in bit_string]
                     row.append(bits)
                 matrix.append(row)
                 i += 1
@@ -124,8 +147,11 @@ def parse_maze_output(filename):
                 i += 1
 
             if i + 1 < len(lines):
-                meta['entry'] = tuple(map(int, lines[i].split(',')))
-                meta['exit'] = tuple(map(int, lines[i + 1].split(',')))
+                raw_entry = tuple(map(int, lines[i].split(',')))
+                raw_exit = tuple(map(int, lines[i + 1].split(',')))
+                if len(raw_entry) == 2 and len(raw_exit) == 2:
+                    meta['entry'] = (raw_entry[0], raw_entry[1])
+                    meta['exit'] = (raw_exit[0], raw_exit[1])
 
     except FileNotFoundError:
         print("Error: File not found")
@@ -133,7 +159,11 @@ def parse_maze_output(filename):
     return matrix, meta
 
 
-def get_path_coords(entry_x, entry_y, path_string):
+def get_path_coords(
+    entry_x: int,
+    entry_y: int,
+    path_string: str,
+) -> list[Position]:
     x, y = entry_x, entry_y
 
     # We keep this so the path touches the Cat!
@@ -155,7 +185,12 @@ def get_path_coords(entry_x, entry_y, path_string):
 
     return coords
 
-def animate_water_search(matrix, meta, theme_idx=0):
+
+def animate_water_search(
+    matrix: MazeMatrix,
+    meta: Meta,
+    theme_idx: int = 0,
+) -> None:
     entry_pos = meta['entry']
     exit_pos = meta['exit']
 
@@ -164,7 +199,6 @@ def animate_water_search(matrix, meta, theme_idx=0):
 
     theme = THEMS[theme_idx]
     wall_color = f'{theme["wall"]} {RESET}'
-    solid_color = f'{theme["solid"]} {RESET}'
     space_color = f'{theme["space"]} {RESET}'
 
     current_water = set()
@@ -223,7 +257,12 @@ def animate_water_search(matrix, meta, theme_idx=0):
 
         time.sleep(0.04)
 
-def render_frame(matrix, theme_idx=0, show_path=False):
+
+def render_frame(
+    matrix: MazeMatrix,
+    theme_idx: int = 0,
+    show_path: bool = False,
+) -> None:
     # This stops the terminal from scroling
     sys.stdout.write("\033[H")
 
@@ -266,7 +305,11 @@ def render_frame(matrix, theme_idx=0, show_path=False):
     sys.stdout.write(out)
     sys.stdout.flush()
 
-def animate_maze_generation(animation_data, config):
+
+def animate_maze_generation(
+    animation_data: Sequence[AnimationStep],
+    config: Mapping[str, Any],
+) -> None:
     matrix = setup_solid_matrix(animation_data)
 
     sys.stdout.write("\033[2J")
@@ -281,7 +324,16 @@ def animate_maze_generation(animation_data, config):
         speed = float(((config['HEIGHT'] * config['WIDTH']) * 0.02) / 625)
         time.sleep(speed)
 
-def animate_tom_walking(matrix, meta, path_coords_list, theme_idx=0, animate_walk=False, sound=True, config=None):
+
+def animate_tom_walking(
+    matrix: MazeMatrix,
+    meta: Meta,
+    path_coords_list: Sequence[Position],
+    theme_idx: int = 0,
+    animate_walk: bool = False,
+    sound: bool = True,
+    config: Mapping[str, Any] | None = None,
+) -> None:
     entry_pos = meta['entry']
     exit_pos = meta['exit']
     theme = THEMS[theme_idx]
@@ -302,9 +354,10 @@ def animate_tom_walking(matrix, meta, path_coords_list, theme_idx=0, animate_wal
         sys.stdout.write("\033[H")
         out = ""
 
-        # If animated, trail grows step-by-step. If static, show the whole trail!
+        # If animated, trail grows step-by-step.
+        # If static, show the whole trail.
         if animate_walk:
-            current_trail = set(path_coords_list[:step_idx+1])
+            current_trail = set(path_coords_list[:step_idx + 1])
         else:
             current_trail = set(path_coords_list)
 
@@ -336,7 +389,8 @@ def animate_tom_walking(matrix, meta, path_coords_list, theme_idx=0, animate_wal
                 elif (c_idx, r_idx) == exit_pos:
                     line_mid += _fit_cell(JERRY)
                 elif (c_idx, r_idx) == entry_pos and not animate_walk:
-                    line_mid += _fit_cell(TOM) # Keep Tom at the start if static
+                    # Keep Tom at the start if static.
+                    line_mid += _fit_cell(TOM)
                 elif is_path:
                     line_mid += TRAIL_CENTER
                 elif is_solid:
@@ -365,14 +419,26 @@ def animate_tom_walking(matrix, meta, path_coords_list, theme_idx=0, animate_wal
             time.sleep(0.08)
 
     if animate_walk is True and len(path_coords_list) > 1 and sound:
+        import pygame
+
         pygame.mixer.init()
-        sound = pygame.mixer.Sound("sounds/meow.mp3")
-        # Play the sound for exactly 3000 milliseconds (3 seconds), then auto-stop
-        sound.set_volume(1.0)
-        sound.play(maxtime=3000)
+        meow_sound = pygame.mixer.Sound("sounds/meow.mp3")
+        # Play sound for exactly 3000 milliseconds (3 seconds), then auto-stop
+        meow_sound.set_volume(1.0)
+        meow_sound.play(maxtime=3000)
+
 
 # Add animate_walk to render_maze's arguments!
-def render_maze(config, show_path=False, animate_walk=False, theme_idx=0, path_coords=None, path_string=None, animation_data=None, sound=True):
+def render_maze(
+    config: Mapping[str, Any],
+    show_path: bool = False,
+    animate_walk: bool = False,
+    theme_idx: int = 0,
+    path_coords: Sequence[Position] | None = None,
+    path_string: str | None = None,
+    animation_data: Sequence[AnimationStep] | None = None,
+    sound: bool = True,
+) -> None:
     matrix, meta = parse_maze_output(config['OUTPUT_FILE'])
     if not matrix:
         return
@@ -384,12 +450,43 @@ def render_maze(config, show_path=False, animate_walk=False, theme_idx=0, path_c
         sys.stdout.flush()
 
     entry_pos = meta['entry']
+    exit_pos = meta['exit']
 
-    if show_path and path_string:
-        path_coords_list = get_path_coords(entry_pos[0], entry_pos[1], path_string)
-    else:
-        path_coords_list = [entry_pos]
+    path_coords_list = [entry_pos]
+    if show_path and path_coords:
+        candidate_path = list(path_coords)
+        candidate_is_grid_path = (
+            bool(candidate_path)
+            and candidate_path[0] == entry_pos
+            and candidate_path[-1] == exit_pos
+            and all(
+                0 <= x < len(matrix[0]) and 0 <= y < len(matrix)
+                for x, y in candidate_path
+            )
+        )
+        if candidate_is_grid_path:
+            path_coords_list = candidate_path
+        elif path_string:
+            path_coords_list = get_path_coords(
+                entry_pos[0],
+                entry_pos[1],
+                path_string,
+            )
+    elif show_path and path_string:
+        path_coords_list = get_path_coords(
+            entry_pos[0],
+            entry_pos[1],
+            path_string,
+        )
 
     # Pass the new flag to the drawing function
-    animate_tom_walking(matrix, meta, path_coords_list, theme_idx, animate_walk, sound, config)
+    animate_tom_walking(
+        matrix,
+        meta,
+        path_coords_list,
+        theme_idx,
+        animate_walk,
+        sound,
+        config,
+    )
     print()

@@ -1,20 +1,32 @@
 from collections import deque
+from collections.abc import Sequence
+from typing import Any
+
 import parse as parser
 
-def parse_maze_output(filename):
-    matrix = []
-    meta = {}
+
+HexCell = list[int]
+HexMatrix = list[list[HexCell]]
+Position = tuple[int, int]
+BinaryCell = int | str
+BinaryGrid = list[list[BinaryCell]]
+Meta = dict[str, Any]
+
+
+def parse_maze_output(filename: str) -> tuple[HexMatrix, Meta]:
+    matrix: HexMatrix = []
+    meta: Meta = {}
     try:
-        with open(filename, 'r') as file:
-            lines = [line.strip() for line in file.readlines()]
+        with open(filename, 'r', encoding='utf-8') as file:
+            lines = [line.strip() for line in file]
             i = 0
 
             while i < len(lines) and lines[i]:
                 row = []
                 for c in lines[i]:
-                    value = int(c, 16)
-                    value = format(value, "04b")
-                    bits = [int(x) for x in value]
+                    int_value = int(c, 16)
+                    bit_string = format(int_value, "04b")
+                    bits = [int(x) for x in bit_string]
                     row.append(bits)
                 matrix.append(row)
                 i += 1
@@ -32,10 +44,12 @@ def parse_maze_output(filename):
         return [], {}
     return matrix, meta
 
-def create_binary_matrix(output_file):
-    hex_matrix, meta = parse_maze_output(output_file)
+
+def create_binary_matrix(output_file: str) -> BinaryGrid | None:
+    """Create an expanded binary grid from the maze output file."""
+    hex_matrix, _meta = parse_maze_output(output_file)
     if not hex_matrix:
-        return
+        return None
 
     entry_pos = parser.config['ENTRY']
     exit_pos = parser.config['EXIT']
@@ -43,7 +57,10 @@ def create_binary_matrix(output_file):
     height = len(hex_matrix)
     width = len(hex_matrix[0])
 
-    binary_grid = [[1 for _ in range(2 * width + 1)] for _ in range(2 * height + 1)]
+    binary_grid: BinaryGrid = [
+        [1 for _ in range(2 * width + 1)]
+        for _ in range(2 * height + 1)
+    ]
 
     for r in range(height):
         for c in range(width):
@@ -75,12 +92,18 @@ def create_binary_matrix(output_file):
     return binary_grid
 
 
-def solve_maze_bfs(output_file, raw_start, raw_exit):
-    
+def solve_maze_bfs(
+    output_file: str,
+    raw_start: Sequence[int],
+    raw_exit: Sequence[int],
+) -> str | tuple[str, list[Position]]:
     binary_grid = create_binary_matrix(output_file)
 
     if binary_grid is None:
-        print("Stopping: Cannot solve the maze because the matrix is empty (File missing).")
+        print(
+            "Stopping: Cannot solve the maze because the matrix is empty "
+            "(File missing)."
+        )
         exit(1)
 
     # raw_start = parser.config['ENTRY']
@@ -92,20 +115,20 @@ def solve_maze_bfs(output_file, raw_start, raw_exit):
     start_pos = (raw_start[1] * 2 + 1, raw_start[0] * 2 + 1)
     exit_pos = (raw_exit[1] * 2 + 1, raw_exit[0] * 2 + 1)
 
-    queue = deque()
+    queue: deque[Position] = deque()
     queue.append(start_pos)
-    
-    visited = set()
+
+    visited: set[Position] = set()
     visited.add(start_pos)
-    
-    parent = {start_pos: None}
-    
+
+    parent: dict[Position, Position | None] = {start_pos: None}
+
     while queue:
         current_pos = queue.popleft()
 
         if current_pos == exit_pos:
             break
-            
+
         r, c = current_pos
 
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -113,7 +136,7 @@ def solve_maze_bfs(output_file, raw_start, raw_exit):
         for dr, dc in directions:
             nr = r + dr
             nc = c + dc
-        
+
             if binary_grid[nr][nc] == 0 or binary_grid[nr][nc] == 'B':
                 neighbor = (nr, nc)
 
@@ -121,23 +144,23 @@ def solve_maze_bfs(output_file, raw_start, raw_exit):
                     visited.add(neighbor)
                     parent[neighbor] = current_pos
                     queue.append(neighbor)
-                    
+
     if exit_pos not in parent:
         return "NO PATH"
-    
+
     path_coords = []
-    current = exit_pos
+    current: Position | None = exit_pos
 
     while current is not None:
         path_coords.append(current)
         current = parent[current]
 
     path_coords.reverse()
-    
+
     path_string = ""
     for i in range(len(path_coords) - 1):
         r1, c1 = path_coords[i]
-        r2, c2 = path_coords[i+1]
+        r2, c2 = path_coords[i + 1]
 
         if r2 < r1:
             path_string += "N"
@@ -147,6 +170,6 @@ def solve_maze_bfs(output_file, raw_start, raw_exit):
             path_string += "E"
         elif c2 < c1:
             path_string += "W"
-    
+
     final_path = path_string[::2]
     return final_path, path_coords

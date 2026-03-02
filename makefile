@@ -3,7 +3,7 @@
 # ==============================
 
 PYTHON = python3
-PIP = pip3
+PIP = $(PYTHON) -m pip
 MAIN = a_maze_ing.py
 
 # Default target
@@ -11,15 +11,11 @@ MAIN = a_maze_ing.py
 
 # Install dependencies
 install:
-	$(PIP) install -r requirements.txt --break-system-packages
-	# 1. Create a virtual environment named 'venv'
-	python3 -m venv venv
-	# 2. Use the pip inside the venv to install your requirements
-	./venv/bin/pip install -r requirements.txt
+	$(PIP) install -r requirements.txt
 
 # Run project
 run:
-	./venv/bin/python a_maze_ing.py
+	@$(PYTHON) $(MAIN) || true
 
 # Debug mode (pdb)
 debug:
@@ -34,6 +30,8 @@ clean:
 
 # Lint (mandatory flags)
 lint:
-	-python3 -m flake8 .
-	-python3 -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	-$(PYTHON) -m flake8 .
+	-$(PYTHON) -m mypy . --explicit-package-bases --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+
+.PHONY: install run debug clean lint
 	
