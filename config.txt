@@ -1,9 +1,9 @@
-width=10
-height=10
+width=35
+height=15
 # x,y
 entry=0,0
 # x,y
-EXIT=9,9
+EXIT=34,14
 OUTPUT_FILE=maze_output
 PERFECT=False
 SEED=0

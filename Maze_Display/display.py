@@ -102,6 +102,7 @@ def get_water_history(matrix, start_pos, exit_pos):
     return history
 
 def parse_maze_output(filename):
+    global matrix, meta
     matrix = []
     meta = {}
     try:
@@ -265,7 +266,7 @@ def render_frame(matrix, theme_idx=0, show_path=False):
     sys.stdout.write(out)
     sys.stdout.flush()
 
-def animate_maze_generation(animation_data):
+def animate_maze_generation(animation_data, config):
     matrix = setup_solid_matrix(animation_data)
 
     sys.stdout.write("\033[2J")
@@ -277,10 +278,10 @@ def animate_maze_generation(animation_data):
 
         # Draw the updated matrix to the screen
         render_frame(matrix)
+        speed = float(((config['HEIGHT'] * config['WIDTH']) * 0.02) / 625)
+        time.sleep(speed)
 
-        time.sleep(0.0001)
-
-def animate_tom_walking(matrix, meta, path_coords_list, theme_idx=0, animate_walk=False, sound=True):
+def animate_tom_walking(matrix, meta, path_coords_list, theme_idx=0, animate_walk=False, sound=True, config=None):
     entry_pos = meta['entry']
     exit_pos = meta['exit']
     theme = THEMS[theme_idx]
@@ -367,6 +368,7 @@ def animate_tom_walking(matrix, meta, path_coords_list, theme_idx=0, animate_wal
         pygame.mixer.init()
         sound = pygame.mixer.Sound("sounds/meow.mp3")
         # Play the sound for exactly 3000 milliseconds (3 seconds), then auto-stop
+        sound.set_volume(1.0)
         sound.play(maxtime=3000)
 
 # Add animate_walk to render_maze's arguments!
@@ -376,7 +378,7 @@ def render_maze(config, show_path=False, animate_walk=False, theme_idx=0, path_c
         return
 
     if animation_data:
-        animate_maze_generation(animation_data)
+        animate_maze_generation(animation_data, config)
         time.sleep(0.5)
         sys.stdout.write("\033[H")
         sys.stdout.flush()
@@ -389,5 +391,5 @@ def render_maze(config, show_path=False, animate_walk=False, theme_idx=0, path_c
         path_coords_list = [entry_pos]
 
     # Pass the new flag to the drawing function
-    animate_tom_walking(matrix, meta, path_coords_list, theme_idx, animate_walk, sound)
+    animate_tom_walking(matrix, meta, path_coords_list, theme_idx, animate_walk, sound, config)
     print()

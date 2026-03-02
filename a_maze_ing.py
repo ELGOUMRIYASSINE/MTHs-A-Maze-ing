@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # 3. Set the volume so it doesn't drown out your sound effects!
     # 0.3 means 30% volume. 1.0 is max volume.
-    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.set_volume(0.15)
 
     # 4. Play the music!
     # The '-1' tells pygame to loop the music infinitely until the program closes.
