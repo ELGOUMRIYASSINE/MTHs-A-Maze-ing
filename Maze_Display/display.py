@@ -1,3 +1,9 @@
+"""Render and animate maze states in the terminal.
+
+This module parses maze output files and provides rendering and animation
+helpers for maze generation, solving, and path display.
+"""
+
 from collections import deque
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -43,6 +49,14 @@ JERRY = "🐭"  # Exit
 
 
 def setup_solid_matrix(animation_data: Sequence[AnimationStep]) -> MazeMatrix:
+    """Create a fully walled matrix sized from animation data.
+
+    Args:
+        animation_data: Sequence of animation steps as (row, col, direction).
+
+    Returns:
+        A maze matrix initialized with all walls set.
+    """
     max_row = max(step[0] for step in animation_data)
     max_col = max(step[1] for step in animation_data)
 
@@ -53,6 +67,14 @@ def setup_solid_matrix(animation_data: Sequence[AnimationStep]) -> MazeMatrix:
 
 
 def break_wall(grid: MazeMatrix, r: int, c: int, direction: str) -> None:
+    """Open one wall of a cell based on a direction code.
+
+    Args:
+        grid: Maze matrix to update.
+        r: Row index of the target cell.
+        c: Column index of the target cell.
+        direction: Wall code ('l', 'b', 'r', or 't').
+    """
     if direction == 'l':
         grid[r][c][0] = 0
     elif direction == 'b':
@@ -64,6 +86,14 @@ def break_wall(grid: MazeMatrix, r: int, c: int, direction: str) -> None:
 
 
 def _display_width(text: str) -> int:
+    """Return terminal display width for a text string.
+
+    Args:
+        text: Text to measure.
+
+    Returns:
+        The number of terminal columns used by the text.
+    """
     width = 0
     for ch in text:
         if unicodedata.combining(ch):
@@ -73,9 +103,14 @@ def _display_width(text: str) -> int:
 
 
 def _fit_cell(text: str, cell_width: int = 3) -> str:
-    """
-    Make sure the returned string occupies exactly `cell_width` terminal
-    columns. This avoids visual shifting when using wide glyphs (e.g. emojis).
+    """Fit text to an exact terminal cell width.
+
+    Args:
+        text: Text to place in a cell.
+        cell_width: Target terminal width in columns.
+
+    Returns:
+        A string that occupies exactly ``cell_width`` columns.
     """
     w = _display_width(text)
     if w == cell_width:
@@ -90,7 +125,16 @@ def get_water_history(
     start_pos: Position,
     exit_pos: Position,
 ) -> list[Position]:
-    """Runs BFS and returns the exact order cells were explored"""
+    """Run BFS and return visited cells in exploration order.
+
+    Args:
+        matrix: Maze matrix with wall definitions.
+        start_pos: Start position as (x, y).
+        exit_pos: Exit position as (x, y).
+
+    Returns:
+        List of visited positions in the order they were explored.
+    """
     queue = deque([start_pos])
     visited = set([start_pos])
     history = []  # This is our video timeline!
@@ -126,6 +170,14 @@ def get_water_history(
 
 
 def parse_maze_output(filename: str) -> tuple[MazeMatrix, Meta]:
+    """Parse a maze output file into matrix data and metadata.
+
+    Args:
+        filename: Path to the maze output file.
+
+    Returns:
+        A tuple of (matrix, meta). ``meta`` may contain ``entry`` and ``exit``.
+    """
     matrix: MazeMatrix = []
     meta: Meta = {}
     try:
@@ -169,6 +221,16 @@ def get_path_coords(
     entry_y: int,
     path_string: str,
 ) -> list[Position]:
+    """Convert a path string into grid coordinates.
+
+    Args:
+        entry_x: Entry x-coordinate.
+        entry_y: Entry y-coordinate.
+        path_string: Path using N/S/E/W directions.
+
+    Returns:
+        Ordered list of path positions including the entry.
+    """
     x, y = entry_x, entry_y
 
     # We keep this so the path touches the Cat!
@@ -196,6 +258,13 @@ def animate_water_search(
     meta: Meta,
     theme_idx: int = 0,
 ) -> None:
+    """Animate BFS flood exploration from entry to exit.
+
+    Args:
+        matrix: Maze matrix to animate.
+        meta: Maze metadata containing entry and exit positions.
+        theme_idx: Theme index for rendering colors.
+    """
     entry_pos = meta['entry']
     exit_pos = meta['exit']
 
@@ -268,6 +337,13 @@ def render_frame(
     theme_idx: int = 0,
     show_path: bool = False,
 ) -> None:
+    """Render one maze frame to the terminal.
+
+    Args:
+        matrix: Maze matrix to render.
+        theme_idx: Theme index for rendering colors.
+        show_path: Unused flag kept for compatibility.
+    """
     # This stops the terminal from scroling
     sys.stdout.write("\033[H")
 
@@ -315,6 +391,12 @@ def animate_maze_generation(
     animation_data: Sequence[AnimationStep],
     config: Mapping[str, Any],
 ) -> None:
+    """Animate maze carving steps in the terminal.
+
+    Args:
+        animation_data: Sequence of wall-break animation steps.
+        config: Maze configuration used to compute animation speed.
+    """
     matrix = setup_solid_matrix(animation_data)
 
     sys.stdout.write("\033[2J")
@@ -339,6 +421,17 @@ def animate_tom_walking(
     sound: bool = True,
     config: Mapping[str, Any] | None = None,
 ) -> None:
+    """Render Tom moving along the solved path.
+
+    Args:
+        matrix: Maze matrix to render.
+        meta: Maze metadata containing entry and exit positions.
+        path_coords_list: Ordered path coordinates to display.
+        theme_idx: Theme index for rendering colors.
+        animate_walk: If True, animate step-by-step movement.
+        sound: If True, play end sound when animation completes.
+        config: Optional config mapping (currently unused).
+    """
     entry_pos = meta['entry']
     exit_pos = meta['exit']
     theme = THEMS[theme_idx]
@@ -444,6 +537,18 @@ def render_maze(
     animation_data: Sequence[AnimationStep] | None = None,
     sound: bool = True,
 ) -> None:
+    """Render the maze, optional generation animation, and solution path.
+
+    Args:
+        config: Maze configuration containing output file path.
+        show_path: If True, display the solution path.
+        animate_walk: If True, animate Tom walking the solution path.
+        theme_idx: Theme index for rendering colors.
+        path_coords: Optional precomputed path coordinates.
+        path_string: Optional path string using N/S/E/W directions.
+        animation_data: Optional generation steps for carve animation.
+        sound: If True, play sound effects when applicable.
+    """
     matrix, meta = parse_maze_output(config['OUTPUT_FILE'])
     if not matrix:
         return

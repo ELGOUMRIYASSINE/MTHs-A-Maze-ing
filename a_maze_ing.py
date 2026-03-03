@@ -17,6 +17,14 @@ PathCoord = tuple[int, int]
 
 
 def _normalize_animation_data(raw_history: Any) -> list[AnimationStep] | None:
+    """Convert raw walk history into a list of valid animation steps.
+
+    Args:
+        raw_history: Data returned by the maze generator walk history.
+
+    Returns:
+        A list of (row, col, direction) tuples, or None if input is invalid.
+    """
     if not isinstance(raw_history, list):
         return None
 
@@ -35,7 +43,14 @@ def _normalize_animation_data(raw_history: Any) -> list[AnimationStep] | None:
 
 
 def checker(reloading: bool = False) -> None:
+    """Parse the configuration file and handle errors.
 
+    Args:
+        reloading: True if called during a config reload, False otherwise.
+
+    Raises:
+        Exception: Re-raises parsing errors when reloading is True.
+    """
     try:
         if len(sys.argv) == 2:
             parser.parse_config(sys.argv[1])
@@ -82,6 +97,11 @@ if __name__ == "__main__":
     pygame.mixer.music.play(-1)
 
     def generate_current_maze(reload_state: bool = False) -> None:
+        """Generate a maze, solve it, and prepare animation data.
+
+        Args:
+            reload_state: If True, reload configuration before generating.
+        """
         global animation_data, path_coords, path_string, Warning_stat
         Warning_stat = None  # Reset at start
 

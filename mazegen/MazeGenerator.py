@@ -1,7 +1,7 @@
 """Base maze generator classes and shared utilities.
 
-This module provides the abstract `MazeGenerator` base class used by
-concrete maze generation implementations in this package.
+This module defines the MazeGenerator abstract base class and common
+utilities used by maze generation algorithms.
 """
 
 import random as rand
@@ -14,13 +14,34 @@ from .Cell import Cell
 class MazeGenerator(ABC):
     """Abstract base class for maze generators.
 
-    Subclasses must implement `generate` and `kill`. The class stores the
-    generated grid and configuration used by the algorithms.
+    Each concrete generator creates a grid of cells and implements a
+    specific maze generation algorithm.
+
+    Attributes:
+        grid: 2D list of Cell objects representing the maze.
+        walk_history: List of walk steps used for animation or replay.
+        HEIGHT: Maze height in number of cells.
+        WIDTH: Maze width in number of cells.
+        entry: Entry coordinates list as [x, y] or similar.
+        exit: Exit coordinates list as [x, y] or similar.
+        first_generation: True if no maze has been generated yet.
+        seed: Random seed used for the random number generator.
+        perfect: True if the maze is required to have no loops.
+        output_file: Path of the file where the maze is written.
+        will_draw: True if an optional pattern should be drawn.
+        pattern: Pattern selector (for example 42 or 1337).
     """
 
     seed_tracker: int = 0
 
     def __init__(self, config: Dict[str, Any]) -> None:
+        """Initialize the maze generator with configuration values.
+
+        Args:
+            config: Dictionary with configuration keys such as HEIGHT,
+                WIDTH, ENTRY, EXIT, SEED, PERFECT, OUTPUT_FILE, and
+                PATTERN.
+        """
         self.__class__.seed_tracker += 1
         self.grid: List[List[Cell]] = []
         self.walk_history: List[List[Any]] = []
@@ -43,32 +64,46 @@ class MazeGenerator(ABC):
 
     @abstractmethod
     def generate(self) -> None:
-        """Run the maze generation algorithm and populate `self.grid`.
+        """Generate a maze and populate the internal grid.
 
-        Concrete implementations should write the final maze into
-        `self.grid` and call `self.update()` when finished.
+        Subclasses must implement this method. They should create all
+        cells, carve passages, and call :meth:`update` when finished.
         """
         raise NotImplementedError()
 
     def get_grid(self) -> List[List[Cell]]:
-        """Return the current grid of cells."""
+        """Return the current grid of cells.
+
+        Returns:
+            A 2D list of Cell objects representing the maze.
+        """
         return self.grid
 
     @abstractmethod
     def kill(self, pos: Tuple[int, int]) -> Optional[Tuple[int, int]]:
-        """Generator-specific walk/kill operation starting at `pos`.
+        """Run one step of the algorithm-specific walk/kill phase.
 
-        Subclasses implement how they traverse / carve the maze from
-        the provided starting position. Implementations may return the
-        final position reached (as a `(y, x)` tuple) or `None` when no
-        such value is applicable.
+        This is usually used by backtracking or recursive algorithms to
+        continue carving from a given position.
+
+        Args:
+            pos: Current cell position as (y, x).
+
+        Returns:
+            The new position reached by the walk as (y, x), or None if
+            the algorithm does not return a position.
         """
         raise NotImplementedError()
 
     def update(self, path_string: Optional[str] = None) -> None:
-        """Write the current maze state to `self.output_file`.
+        """Write the current maze state to the output file.
 
-        If `path_string` is provided, append it to the output.
+        The grid, entry, and exit cells are written. If ``path_string``
+        is provided, it is appended at the end of the file.
+
+        Args:
+            path_string: Optional string describing a path through the
+                maze to append after the grid.
         """
         if not self.grid:
             return
@@ -87,7 +122,14 @@ class MazeGenerator(ABC):
                 f.write(path_string)
 
     def reload_config(self, config: Dict[str, Any]) -> None:
-        """Reload configuration values into this generator instance."""
+        """Reload configuration values into this generator instance.
+
+        Existing values such as size, seed, and pattern are updated
+        from the given configuration.
+
+        Args:
+            config: Dictionary containing the new configuration values.
+        """
         self.HEIGHT = int(config["HEIGHT"])
         self.WIDTH = int(config["WIDTH"])
         self.entry = config.get("ENTRY", [])
@@ -102,9 +144,15 @@ class MazeGenerator(ABC):
             self.pattern = 42
 
     def make_inperfect(self) -> None:
+        """Add a few random extra openings to make the maze imperfect.
+
+        This method breaks some additional walls to introduce loops in
+        a maze that would otherwise be perfect.
+        """
         walls_to_break = int(self.HEIGHT * self.WIDTH * 0.03)
 
         i = 0
+        # to avoid infinit loops if
         iterations = 0
 
         dim = ["top", "bottom", "left", "right"]
@@ -156,7 +204,11 @@ class MazeGenerator(ABC):
         self.update()
 
     def generate_grid(self) -> None:
-        """Create a fresh grid of `Cell` objects with all walls intact."""
+        """Create a fresh grid of Cell objects with all walls intact.
+
+        The existing grid is replaced by a new HEIGHT x WIDTH grid.
+        """
+        self.grid = []
         for y in range(self.HEIGHT):
             row: List[Cell] = []
             for x in range(self.WIDTH):
@@ -166,7 +218,20 @@ class MazeGenerator(ABC):
         self.update()
 
     def check_root(self, pos: Tuple[int, int], root: str) -> bool:
-        """Return True if the neighbour in `root` direction is available."""
+        """Check if the neighbouring cell in a direction is available.
+
+        A neighbour is available if it is inside the grid, not visited,
+        and not blocked.
+
+        Args:
+            pos: Current cell position as (y, x).
+            root: Direction to check; one of "top", "bottom",
+                "left", or "right".
+
+        Returns:
+            True if the neighbour in the given direction can be used,
+            otherwise False.
+        """
         y, x = pos
         if root == "top":
             return (
@@ -195,7 +260,23 @@ class MazeGenerator(ABC):
         return False
 
     def walk(self, root: str, pos: Tuple[int, int]) -> Tuple[int, int]:
-        """Carve passage in direction `root` from `pos` and return new pos."""
+        """Carve a passage from a position in a given direction.
+
+        This removes the wall between the current cell and the
+        neighbour in the requested direction, records the step in
+        ``walk_history``, and returns the new position.
+
+        Args:
+            root: Direction to move; one of "top", "bottom",
+                "left", or "right".
+            pos: Current cell position as (y, x).
+
+        Returns:
+            The new cell position as a (y, x) tuple.
+
+        Raises:
+            ValueError: If an unknown direction is given.
+        """
         y, x = pos
         next_pos: Tuple[int, int]
         if root == "top":
@@ -228,12 +309,24 @@ class MazeGenerator(ABC):
         return next_pos
 
     def get_walk_history(self) -> Optional[List[List[Any]]]:
-        """Return the recorded walk history if present."""
+        """Return the recorded walk history.
+
+        Returns:
+            A list of walk steps if any have been recorded, otherwise
+            None.
+        """
         if self.walk_history:
             return self.walk_history
         return None
 
     def add_42(self) -> None:
+        """Apply a decorative numeric pattern to the maze grid.
+
+        The pattern is drawn by marking some cells as blocked. If the
+        configured pattern is 1337, a larger pattern is used;
+        otherwise the default 42 pattern is drawn. If the maze is too
+        small, no pattern is drawn.
+        """
         self.will_draw = True
         pattern_42 = [
             [1, 0, 1, 0, 1, 1, 1],
