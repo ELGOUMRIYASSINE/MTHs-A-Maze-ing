@@ -131,6 +131,8 @@ def parse_maze_output(filename: str) -> tuple[MazeMatrix, Meta]:
     try:
         with open(filename, 'r', encoding='utf-8') as file:
             lines = [line.strip() for line in file]
+            if len(lines) < 2:
+                raise ValueError("The output file corrupted, can't display anything Thank you !")  # noqa: E501
             i = 0
 
             while i < len(lines) and lines[i]:
@@ -156,6 +158,9 @@ def parse_maze_output(filename: str) -> tuple[MazeMatrix, Meta]:
     except FileNotFoundError:
         print("Error: File not found")
         return [], {}
+    except ValueError as e:
+        print(e)
+        exit()
     return matrix, meta
 
 

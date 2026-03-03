@@ -34,7 +34,7 @@ class MazeGenerator(ABC):
         else:
             self.seed = rand.randint(0, 1000000)
         self.perfect: bool = bool(config.get("PERFECT", True))
-        self.output_file: str = str(config.get("OUTPUT_FILE", "maze_output.txt")) # noqa: E501
+        self.output_file: str = str(config.get("OUTPUT_FILE", "maze_output.txt"))  # noqa: E501
         self.will_draw: bool = True
         if config.get("PATTERN"):
             self.pattern: int = int(config["PATTERN"])

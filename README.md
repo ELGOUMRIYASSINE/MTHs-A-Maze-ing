@@ -1,3 +1,4 @@
+*This project has been created as part of the 42 curriculum by yelgoumr, ayfadli*
 # MTH's A-MAZE-ING
 
 Terminal maze generator and solver project with interactive visualization.
