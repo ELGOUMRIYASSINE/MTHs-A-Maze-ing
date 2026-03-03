@@ -12,6 +12,12 @@ Terminal maze generator and solver project with interactive visualization.
 - Renders the maze in terminal with theme switching and optional animation.
 - Plays background music/effects through `pygame`.
 
+### Why these algorithms?
+
+- **Recursive Backtracking**: simple to implement, guarantees perfect mazes (one unique path between any two cells), and is well suited for step‑by‑step visualization.
+- **Hunt-and-Kill**: offers a different maze style and randomness pattern while still producing perfect mazes, which makes side‑by‑side comparison interesting.
+- **BFS solver**: breadth‑first search naturally finds the shortest path in an unweighted grid and is easy to reason about and animate level by level.
+
 ## Project layout
 
 - `a_maze_ing.py`: main interactive CLI application.
@@ -23,6 +29,32 @@ Terminal maze generator and solver project with interactive visualization.
 - `requirements.txt`: runtime dependencies.
 
 Detailed package docs are in `mazegen/README.md`.
+
+## Reusable components
+
+The maze generation engine is packaged in `mazegen/` so it can be reused in other projects:
+
+- Import the generator class and call it with your own dimensions and configuration.
+- Use the returned grid/graph structure as input for different solvers or visualizations.
+
+Example usage from another Python script:
+
+```python
+from mazegen.RecBTGenerator import RecBTGenerator
+
+generator = RecBTGenerator(config={
+    'WIDTH': 20,
+    'HEIGHT': 20,
+    'ENTRY': (0, 0),
+    'EXIT': (19, 19),
+    'PERFECT': True,
+    'SEED': 1,
+})
+
+maze = generator.generate()
+```
+
+This separation allows you to plug the same generation logic into GUIs, web apps, or additional analysis tools without relying on the CLI.
 
 ## Requirements
 
@@ -135,6 +167,121 @@ Equivalent direct commands:
 python3 -m flake8 .
 python3 -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 ```
+
+## Team & project management
+
+### Team members
+
+- **yelgoumr**
+    - Implemented recursive backtracking generator
+    - Implemented Hunt-and-Kill generator
+    - Implemented configuration parser
+    - Implemented runtime config reload
+    - Built reusable `mazegen` package
+    - Handled packaging structure
+    - Ensured algorithm abstraction
+
+- **ayfadli**
+    - Implemented BFS pathfinder
+    - Implemented shortest path visualization
+    - Implemented terminal display system
+    - Implemented animation system
+    - Integrated solver with generator history
+
+### Planning
+
+**Initial plan**
+
+1. Build generator
+2. Add solver
+3. Add display
+4. Add animation
+5. Add sound
+6. Refactor into reusable modules
+
+**Evolution**
+
+- Started as a single-file design
+- Refactored into a modular architecture
+- Extracted generation logic into a dedicated package
+- Added configuration hot-reload feature
+- Improved separation of concerns between generation, solving, display, and config
+
+### What worked well
+
+- Modular architecture
+- Clear responsibility separation
+- Reusable generation engine
+- Animation history tracking
+
+### What could be improved
+
+- Add unit tests
+- Add benchmarking
+- Improve CLI UX
+- Add more algorithms (Prim, Kruskal)
+
+### Tools used
+
+- Python 3
+- `flake8`
+- `mypy`
+- `make`
+- `pygame`
+- Git
+- Terminal ANSI rendering
+
+## Advanced features
+
+- Multiple generation algorithms
+- Shortest path solving (BFS)
+- Interactive CLI menu
+- Theme switching
+- Animated solving
+- Sound toggle
+- Runtime config reload
+- Perfect maze option
+- Seed control for reproducibility
+
+## Resources
+
+**Maze generation**
+
+- Recursive Backtracking: https://en.wikipedia.org/wiki/Maze_generation_algorithm
+- Hunt-and-Kill: https://weblog.jamisbuck.org/2011/1/24/
+
+**BFS**
+
+- Documentation: https://en.wikipedia.org/wiki/Breadth-first_search
+- Video: https://www.youtube.com/watch?v=KiCBXu4P-2Y
+
+**Python packaging**
+
+- Guide: https://packaging.python.org/en/latest/tutorials/packaging-projects/
+
+## AI usage
+
+AI tools were used for:
+
+- Algorithm comparison research
+- Documentation structure improvement
+- Code review suggestions
+- Refactoring recommendations
+- Error explanation assistance
+
+AI was not used to directly generate full project logic without understanding. All algorithms were implemented manually and validated by testing.
+
+## Conclusion
+
+This project demonstrates:
+
+- Strong algorithmic implementation
+- Clean architecture principles
+- Runtime safety validation
+- Modular design
+- Real-world packaging practice
+
+It reflects collaborative teamwork and a structured engineering approach aligned with the 42 curriculum philosophy.
 
 ## Troubleshooting
 

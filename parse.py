@@ -159,7 +159,7 @@ def value_valid(key: str, value: str) -> None:
         try:
             config[key] = int(value)
         except ValueError:
-            config_error("SEED must be a valid integer number.")
+            config_error("SEED must be integer number.")
 
     elif key == "PATTERN":
         try:

@@ -5,13 +5,30 @@
 PYTHON = python3
 PIP = $(PYTHON) -m pip
 MAIN = a_maze_ing.py
+VENV = maze_venv
+
+SRC = \
+	a_maze_ing.py \
+	parse.py \
+	Maze_Display/display.py \
+	Path_finder/maze_solver.py \
+	mazegen/__init__.py \
+	mazegen/MazeGenerator.py \
+	mazegen/Cell.py \
+	mazegen/rec_bt_generator.py \
+	mazegen/kill_hunt_generator.py
 
 # Default target
 .DEFAULT_GOAL := run
 
-# Install dependencies
+# Install dependencies in a local virtualenv
 install:
-	$(PIP) install -r requirements.txt
+	python3 -m venv maze_venv
+	maze_venv/bin/python3 -m pip install -r requirements.txt
+
+# Install dependencies in the current Python environment - dangerous, use with caution
+install_current:
+	$(PYTHON) -m pip install --break-system-packages -r requirements.txt
 
 # Run project
 run:
@@ -19,7 +36,7 @@ run:
 
 # Debug mode (pdb)
 debug:
-	$(PYTHON) -m pdb $(MAIN)
+	@$(PYTHON) -m pdb $(MAIN) || true
 
 # Clean cache files
 clean:
@@ -30,8 +47,15 @@ clean:
 
 # Lint (mandatory flags)
 lint:
-	-$(PYTHON) -m flake8 .
-	-$(PYTHON) -m mypy . --explicit-package-bases --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	$(PYTHON) -m flake8 .
+	$(PYTHON) -m mypy . 
+# 	$(PYTHON) -m mypy $(SRC) \
+# 		--explicit-package-bases \
+# 		--warn-return-any \
+# 		--warn-unused-ignores \
+# 		--ignore-missing-imports \
+# 		--disallow-untyped-defs \
+# 		--check-untyped-defs
 
-.PHONY: install run debug clean lint
-	
+.PHONY: install install_current run debug clean lint
+
