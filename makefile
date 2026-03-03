@@ -21,13 +21,16 @@ SRC = \
 # Default target
 .DEFAULT_GOAL := run
 
-# Install dependencies in a local virtualenv
 install:
+	python3 -m pip install -r requirements.txt
+
+# Install dependencies in a local virtualenv
+venv_install:
 	python3 -m venv maze_venv
 	maze_venv/bin/python3 -m pip install -r requirements.txt
 
 # Install dependencies in the current Python environment - dangerous, use with caution
-install_current:
+install_force:
 	$(PYTHON) -m pip install --break-system-packages -r requirements.txt
 
 # Run project
@@ -48,14 +51,16 @@ clean:
 # Lint (mandatory flags)
 lint:
 	$(PYTHON) -m flake8 .
-	$(PYTHON) -m mypy . 
-# 	$(PYTHON) -m mypy $(SRC) \
-# 		--explicit-package-bases \
-# 		--warn-return-any \
-# 		--warn-unused-ignores \
-# 		--ignore-missing-imports \
-# 		--disallow-untyped-defs \
-# 		--check-untyped-defs
+	$(PYTHON) -m mypy .
+
+lint_src:
+	$(PYTHON) -m mypy $(SRC) \
+		--explicit-package-bases \
+		--warn-return-any \
+		--warn-unused-ignores \
+		--ignore-missing-imports \
+		--disallow-untyped-defs \
+		--check-untyped-defs
 
 .PHONY: install install_current run debug clean lint
 
