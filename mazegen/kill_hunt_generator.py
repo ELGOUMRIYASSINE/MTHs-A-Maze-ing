@@ -108,11 +108,7 @@ class KillHuntGenerator(MazeGenerator):
                 break
         self.grid[start[0]][start[1]].visited = True
         while True:
-            # `kill` may return a position tuple or None
             start = self.kill(start)
-            if start is None:
-                break
-            self.grid[start[0]][start[1]].visited = True
             start = self.hunt()
             self.update()
             if start is None:
