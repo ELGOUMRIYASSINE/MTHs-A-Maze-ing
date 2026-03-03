@@ -291,3 +291,53 @@ It reflects collaborative teamwork and a structured engineering approach aligned
 - `Configuration Error`: verify required keys and value formats in config file.
 - No sound / mixer errors: ensure system audio backend is available, or turn sound off.
 - Display glitches: use a terminal with ANSI + Unicode support.
+
+## Maze generation architecture
+
+Maze generation is built around three core concepts:
+
+- **`BaseGenerator`**  
+  An abstract base class (in `mazegen/BaseGenerator.py`) that defines
+  common behaviour for all maze-generation algorithms (grid handling,
+  seeding, walk history, imperfect maze post-processing, etc.).
+
+- **Concrete generators**  
+  - `KillHuntGenerator` (`mazegen/kill_hunt_generator.py`): implements
+    the hunt-and-kill algorithm.
+  - The recursive-backtracking generator (`mazegen/rec_bt_generator.py`):
+    implements the recursive backtracking algorithm.
+
+  Both classes inherit from `BaseGenerator`.
+
+- **`MazeGenerator` facade**  
+  The `mazegen/MazeGenerator.py` module exposes a `MazeGenerator` class
+  that acts as a small factory for algorithm-specific generators:
+
+  ```python
+  from mazegen.MazeGenerator import MazeGenerator
+  import parse as parser
+
+  # parse_config() populates parser.config
+  parser.parse_config()
+
+  factory = MazeGenerator()
+  rec_bt_gen = factory.rec_bt_generator(parser.config)
+  kill_hunt_gen = factory.kill_hunt_gen(parser.config)
+
+  # Each returned object is a BaseGenerator subclass:
+  rec_bt_gen.generate()
+  kill_hunt_gen.generate()
+  ```
+
+  The CLI entrypoint (`a_maze_ing.py`) uses this facade to construct
+  generators instead of instantiating algorithm classes directly.
+
+## Extending with new algorithms
+
+To add a new maze-generation algorithm:
+
+1. Implement a new class that inherits from `BaseGenerator`.
+2. Implement the required abstract methods (e.g. `generate()`).
+3. Optionally expose a convenience constructor in
+   `mazegen/MazeGenerator.MazeGenerator` (similar to
+   `rec_bt_generator()` and `kill_hunt_gen()`).

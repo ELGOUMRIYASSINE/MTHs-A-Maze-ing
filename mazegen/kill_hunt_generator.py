@@ -1,26 +1,39 @@
 """Kill-and-hunt maze generator implementation.
 
-Provides `KillHuntGenerator`, an implementation of the hunt-and-kill
-algorithm for generating mazes.
+Provides :class:`KillHuntGenerator`, a concrete implementation of the
+hunt-and-kill algorithm for generating mazes. This class derives from
+:class:`BaseGenerator` and is typically instantiated through the
+:class:`mazegen.MazeGenerator.MazeGenerator` facade rather than used
+directly.
 """
 
 import random as rand
 import sys
 from typing import Optional, Tuple
-from .MazeGenerator import MazeGenerator
+from .BaseGenerator import BaseGenerator
 
 
-class KillHuntGenerator(MazeGenerator):
-    """Hunt-and-kill generator implementation.
+class KillHuntGenerator(BaseGenerator):
+    """Concrete hunt-and-kill maze generator.
 
-    The algorithm alternates between random walks and scanning for
-    unvisited cells adjacent to the carved maze.
+    The algorithm alternates between random walks (the *kill* phase)
+    and scanning for unvisited cells adjacent to the carved maze (the
+    *hunt* phase). Common generator behaviour is provided by
+    :class:`BaseGenerator`.
     """
 
     def kill(self, pos: Tuple[int, int]) -> Tuple[int, int]:
-        """Perform a random-walk carving from `pos` until trapped.
+        """Perform a random-walk carving from ``pos`` until trapped.
 
-        Returns the final position where the walk stopped.
+        During this phase, the generator repeatedly picks a random valid
+        direction and carves passages until no unvisited neighbours are
+        available.
+
+        Args:
+            pos: Starting cell coordinates ``(row, col)`` for the walk.
+
+        Returns:
+            tuple[int, int]: The final position where the walk stopped.
         """
         dim = ["top", "bottom", "left", "right"]
         while True:
@@ -43,8 +56,13 @@ class KillHuntGenerator(MazeGenerator):
     def hunt(self) -> Optional[Tuple[int, int]]:
         """Scan the grid for an unvisited cell adjacent to the maze.
 
-        If found, carve a connection to a visited neighbour and return
-        the coordinates of that cell. Otherwise return `None`.
+        If such a cell is found, a connection is carved to a visited
+        neighbour and the coordinates of that cell are returned so that
+        a new kill phase can start from there.
+
+        Returns:
+            tuple[int, int] | None: Coordinates of the next starting
+            cell, or ``None`` when the entire grid has been visited.
         """
         H = self.HEIGHT - 1
         W = self.WIDTH - 1
@@ -87,7 +105,13 @@ class KillHuntGenerator(MazeGenerator):
         return None
 
     def generate(self) -> None:
-        """Generate a maze using the hunt-and-kill algorithm."""
+        """Generate a maze using the hunt-and-kill algorithm.
+
+        This method resets the internal state, seeds the RNG, builds the
+        grid, runs alternating kill/hunt phases until the maze is fully
+        carved, and optionally applies the imperfect-maze post-process
+        defined in :class:`BaseGenerator`.
+        """
         if self.first_generation:
             self.walk_history = []
             rand.seed(self.seed)

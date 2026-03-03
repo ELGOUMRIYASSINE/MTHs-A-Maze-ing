@@ -22,26 +22,33 @@ From the repository root:
 pip install -e .
 ```
 
-Then import directly from the package:
+You can either work with the concrete generators directly, or use the
+high-level `MazeGenerator` facade:
 
 ```python
-from mazegen import RecBTGenerator, KillHuntGenerator
+# Recommended: go through the factory facade
+from mazegen.MazeGenerator import MazeGenerator
+
+# Or direct imports of concrete generators if needed
+from mazegen.rec_bt_generator import RecBTGenerator
+from mazegen.kill_hunt_generator import KillHuntGenerator
 ```
 
-## `MazeGenerator` abstract class
+## `BaseGenerator` abstract class
 
-`MazeGenerator` is the abstract base class used by all algorithms in this
+`BaseGenerator` is the abstract base class used by all algorithms in this
 package.
 
 - It defines the shared configuration parsing (`HEIGHT`, `WIDTH`, other
-	fields).
+  fields).
 - It owns the maze grid (`self.grid`) and walk history (`self.walk_history`).
 - It handles file output through `update()`.
 
 Abstract methods (must be implemented by subclasses):
 
 - `generate()`: run the full generation process.
-- `kill(pos)`: algorithm-specific carving/walk behavior.
+- `kill(pos)`: algorithm-specific carving/walk behavior (for algorithms
+  that use a kill phase).
 
 Common inherited methods:
 
@@ -50,11 +57,38 @@ Common inherited methods:
 - `reload_config(config)`
 - `update(path_string=None)`
 
+## `MazeGenerator` facade
+
+The `mazegen/MazeGenerator.py` module exposes a small factory class that
+creates properly configured generator instances for the supported
+algorithms:
+
+- `MazeGenerator.rec_bt_generator(config)` → `RecBTGenerator`
+- `MazeGenerator.kill_hunt_gen(config)` → `KillHuntGenerator`
+
+This is what the main CLI entrypoint (`a_maze_ing.py`) uses.
+
+Example:
+
+```python
+from mazegen.MazeGenerator import MazeGenerator
+
+factory = MazeGenerator()
+
+rec_bt_gen = factory.rec_bt_generator(config)
+kill_hunt_gen = factory.kill_hunt_gen(config)
+
+rec_bt_gen.generate()
+kill_hunt_gen.generate()
+```
+
+Both returned objects are concrete subclasses of `BaseGenerator`.
+
 ## Required configuration
 
 Each generator expects a `config` dictionary.
 
-Strict minimum keys (required by `MazeGenerator.__init__`):
+Strict minimum keys (required by `BaseGenerator.__init__`):
 
 - `HEIGHT` (int)
 - `WIDTH` (int)
@@ -72,20 +106,20 @@ Example config:
 
 ```python
 config = {
-	"WIDTH": 30,
-	"HEIGHT": 20,
-	"ENTRY": [0, 0],
-	"EXIT": [29, 19],
-	"SEED": 12345,
-	"PERFECT": True,
-	"OUTPUT_FILE": "maze_output",
-	"PATTERN": 42,
+  "WIDTH": 30,
+  "HEIGHT": 20,
+  "ENTRY": [0, 0],
+  "EXIT": [29, 19],
+  "SEED": 12345,
+  "PERFECT": True,
+  "OUTPUT_FILE": "maze_output",
+  "PATTERN": 42,
 }
 ```
 
 ## How the package works
 
-1. Create a generator instance with `config`.
+1. Create a generator instance (either via `MazeGenerator` or directly).
 2. Call `generate()`.
 3. The internal grid is built and carved.
 4. Maze data is written to `OUTPUT_FILE`.
@@ -99,12 +133,13 @@ The output file includes:
 
 ## Usage examples
 
-### 1) Generate with Recursive Backtracking
+### 1) Generate with Recursive Backtracking (via factory)
 
 ```python
-from mazegen import RecBTGenerator
+from mazegen.MazeGenerator import MazeGenerator
 
-generator = RecBTGenerator(config)
+factory = MazeGenerator()
+generator = factory.rec_bt_generator(config)
 generator.generate()
 
 grid = generator.get_grid()
@@ -113,21 +148,24 @@ print(f"Generated {len(grid)}x{len(grid[0])} maze")
 print(f"History steps: {0 if history is None else len(history)}")
 ```
 
-### 2) Generate with Hunt-and-Kill
+### 2) Generate with Hunt-and-Kill (via factory)
 
 ```python
-from mazegen import KillHuntGenerator
+from mazegen.MazeGenerator import MazeGenerator
 
-generator = KillHuntGenerator(config)
+factory = MazeGenerator()
+generator = factory.kill_hunt_gen(config)
 generator.generate()
 ```
 
 ### 3) Regenerate with a new config
 
 ```python
-from mazegen import RecBTGenerator
+from mazegen.MazeGenerator import MazeGenerator
 
-generator = RecBTGenerator(config)
+factory = MazeGenerator()
+generator = factory.rec_bt_generator(config)
+
 generator.generate()
 
 new_config = {**config}
@@ -149,4 +187,6 @@ generator.update(path_string=path_string)
 - `KillHuntGenerator`: different corridor distribution and maze texture.
 
 Both share the same config shape and public interface (`generate`, `update`,
-`get_grid`, `get_walk_history`, `reload_config`).
+`get_grid`, `get_walk_history`, `reload_config`) via the `BaseGenerator`
+base class and can be obtained conveniently through the `MazeGenerator`
+factory.

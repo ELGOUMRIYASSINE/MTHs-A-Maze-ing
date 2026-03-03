@@ -7,12 +7,12 @@ algorithm implementation subclassing `MazeGenerator`.
 import random as rand
 import sys
 from typing import List, Tuple
-from .MazeGenerator import MazeGenerator
+from .BaseGenerator import BaseGenerator
 
 sys.setrecursionlimit(10000)
 
 
-class RecBTGenerator(MazeGenerator):
+class RecBTGenerator(BaseGenerator):
     """Recursive backtracking generator.
 
     The algorithm marks cells as visited and recursively visits available

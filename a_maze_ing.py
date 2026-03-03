@@ -6,8 +6,7 @@ import parse as parser
 from Maze_Display import display
 from Path_finder import maze_solver
 from mazegen.MazeGenerator import MazeGenerator
-from mazegen.kill_hunt_generator import KillHuntGenerator
-from mazegen.rec_bt_generator import RecBTGenerator
+from mazegen.BaseGenerator import BaseGenerator
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame  # noqa: E402
@@ -74,8 +73,8 @@ if __name__ == "__main__":
     gen_algo = 1  # 1 for RecBT, 0 for KillHunt
 
     # Initialize generators once
-    maze_rec = RecBTGenerator(parser.config)
-    maze_kill = KillHuntGenerator(parser.config)
+    maze_rec: BaseGenerator = MazeGenerator().rec_bt_generator(parser.config)
+    maze_kill: BaseGenerator = MazeGenerator().kill_hunt_gen(parser.config)
 
     # Global state variables
     animation_data: list[AnimationStep] | None = None
@@ -106,7 +105,7 @@ if __name__ == "__main__":
         Warning_stat = None  # Reset at start
 
         if gen_algo:
-            active_maze: MazeGenerator = maze_rec
+            active_maze: BaseGenerator = maze_rec
         else:
             active_maze = maze_kill
 
