@@ -7,17 +7,6 @@ PIP = $(PYTHON) -m pip
 MAIN = a_maze_ing.py
 VENV = maze_venv
 
-SRC = \
-	a_maze_ing.py \
-	parse.py \
-	Maze_Display/display.py \
-	Path_finder/maze_solver.py \
-	mazegen/__init__.py \
-	mazegen/MazeGenerator.py \
-	mazegen/Cell.py \
-	mazegen/rec_bt_generator.py \
-	mazegen/kill_hunt_generator.py
-
 # Default target
 .DEFAULT_GOAL := run
 
@@ -51,16 +40,7 @@ clean:
 # Lint (mandatory flags)
 lint:
 	$(PYTHON) -m flake8 .
-	$(PYTHON) -m mypy .
-
-lint_src:
-	$(PYTHON) -m mypy $(SRC) \
-		--explicit-package-bases \
-		--warn-return-any \
-		--warn-unused-ignores \
-		--ignore-missing-imports \
-		--disallow-untyped-defs \
-		--check-untyped-defs
+	$(PYTHON) -m mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 .PHONY: install install_current run debug clean lint
 
