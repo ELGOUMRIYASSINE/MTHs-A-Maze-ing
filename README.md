@@ -3,6 +3,8 @@
 
 Terminal maze generator and solver project with interactive visualization.
 
+#  Description
+
 ## What this project does
 
 - Generates mazes with two algorithms:
@@ -118,7 +120,7 @@ SEED=1
 PATTERN=42
 ```
 
-## Run the project
+## Run the project (Instructions)
 
 From repository root:
 
